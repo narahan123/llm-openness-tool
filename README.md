@@ -10,57 +10,50 @@
 graph TD
 
     %% 사용자 입력
-    input_user[사용자 입력: 모델명 또는 URL]
+    input[사용자 입력 (모델명 or URL)]
 
-    %% 입력 처리 모듈
-    subgraph InputModule[1. 입력 처리 모듈]
-        parse[입력 파싱 및 정규화]
-        cache[캐시 확인]
-        mapping[메타 매핑 조회]
-        candidate[평가 대상 리소스 후보 생성]
+    %% 입력 처리
+    subgraph InputProcessor[1. Input Processor]
+        parse_model[모델명/URL 파싱 및 식별자 정규화]
     end
 
-    %% 비동기 메시지 큐
-    subgraph MessageQueue[2. 메시지 큐 / 태스크 큐]
-        queue[Celery / RabbitMQ]
-    end
+    %% FetchRequest 생성 및 병렬 분배
+    input --> parse_model --> request[FetchRequest 생성] --> dispatcher[플러그인에 병렬 전파]
 
     %% 리소스 디스커버리
-    subgraph Fetchers[3. 리소스 디스커버리 에이전트]
+    subgraph ResourceDiscoveryAgent[2. Resource Discovery Agent]
         arxiv[ArxivFetcher]
         hf[HuggingFaceFetcher]
-        github[GitHubFetcher]
+        gh[GitHubFetcher]
         blog[BlogCrawler]
     end
 
-    %% 파싱 모듈
-    subgraph Parser[4. 정보 추출 및 파싱]
-        parse_logic[규칙/NLP 기반 파싱]
-        result[추출 결과: JSON]
+    dispatcher --> arxiv --> raw_arxiv[논문 메타데이터]
+    dispatcher --> hf --> raw_hf[모델카드 텍스트]
+    dispatcher --> gh --> raw_gh[README / LICENSE]
+    dispatcher --> blog --> raw_blog[웹 게시물 / 블로그]
+
+    %% 정보 추출 및 파싱
+    subgraph ExtractParse[3. 정보 추출 및 파싱]
+        rule_parse[규칙 기반 파싱 (정규표현식, 태그)]
+        nlp_parse[경량 NLP 파이프라인 (의존성 해석)]
+        merge[16개 평가항목 관련 정보 추출]
     end
+
+    raw_arxiv --> rule_parse
+    raw_hf --> rule_parse
+    raw_gh --> rule_parse
+    raw_blog --> rule_parse
+    rule_parse --> nlp_parse --> merge
 
     %% 평가 엔진
-    subgraph Evaluator[5. 평가 엔진]
-        score[프레임워크 매핑 및 점수화]
-        override[수동 오버라이드 - UI 연동]
+    subgraph EvaluationEngine[4. 평가 엔진]
+        eval_model[텍스트 분류 모델 기반 평가]
+        score_map[개방성 점수 계산 (Open:1, Semi:0.5, Closed:0)]
+        output[최종 리더보드 및 시각화]
     end
 
-    %% 데이터 관리
-    subgraph DB[6. 데이터 관리 및 캐시]
-        pg[PostgreSQL: 평가 결과 저장]
-        redis[Redis: API 호출 캐시]
-    end
-
-    %% 흐름 연결
-    input_user --> parse --> cache --> mapping --> candidate --> queue
-    queue --> arxiv --> queue
-    queue --> hf --> queue
-    queue --> github --> queue
-    queue --> blog --> queue
-    queue --> parse_logic --> result --> queue
-    queue --> score --> override --> pg
-    cache --> redis
-    result --> pg
+    merge --> eval_model --> score_map --> output
 
 
 
