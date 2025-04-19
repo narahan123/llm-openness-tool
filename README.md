@@ -8,50 +8,56 @@
 
 ```mermaid
 graph TD
-    subgraph "사용자 인터페이스"
-        A[사용자 입력 (모델명 / URL)]
-    end
 
-    subgraph "입력 처리 모듈"
+    %% 사용자 입력
+    A[사용자 입력: 모델명 또는 URL]
+
+    %% 입력 처리 모듈
+    subgraph InputModule[1. 입력 처리 모듈]
         B1[입력 파싱 및 정규화]
         B2[캐시 확인]
         B3[메타 매핑 조회]
         B4[평가 대상 리소스 후보 생성]
     end
 
-    subgraph "비동기 워크플로우"
-        C[메시지 큐 / 태스크 큐 (RabbitMQ / Celery)]
+    %% 비동기 메시지 큐
+    subgraph Queue[2. 메시지 큐 / 태스크 큐]
+        Q[Celery / RabbitMQ]
     end
 
-    subgraph "리소스 디스커버리 에이전트"
-        D1[ArxivFetcher]
-        D2[HuggingFaceFetcher]
-        D3[GitHubFetcher]
-        D4[BlogCrawler]
+    %% 리소스 디스커버리
+    subgraph Fetcher[3. 리소스 디스커버리 에이전트]
+        F1[ArxivFetcher]
+        F2[HuggingFaceFetcher]
+        F3[GitHubFetcher]
+        F4[BlogCrawler]
     end
 
-    subgraph "정보 추출 및 파싱"
-        E1[규칙/NLP 기반 처리]
-        E2[추출 결과 (JSON)]
+    %% 파싱 모듈
+    subgraph Parser[4. 정보 추출 및 파싱]
+        P1[규칙/NLP 기반 파싱]
+        P2[추출 결과 (JSON)]
     end
 
-    subgraph "평가 엔진"
-        F1[프레임워크 매핑 및 점수화]
-        F2[수동 오버라이드 (UI 연동)]
+    %% 평가 엔진
+    subgraph Evaluator[5. 평가 엔진]
+        E1[프레임워크 매핑 및 점수화]
+        E2[수동 오버라이드 (UI 연동)]
     end
 
-    subgraph "데이터 관리 및 캐시"
-        G1[PostgreSQL: 모델 메타, 평가 결과]
-        G2[Redis: API 호출 캐시]
+    %% DB & 캐시
+    subgraph DB[6. 데이터 관리 및 캐시]
+        D1[PostgreSQL: 평가 결과 저장]
+        D2[Redis: API 호출 캐시]
     end
 
     %% 흐름 연결
-    A --> B1 --> B2 --> B3 --> B4 --> C
-    C --> D1 --> C
-    C --> D2 --> C
-    C --> D3 --> C
-    C --> D4 --> C
-    C --> E1 --> E2 --> C
-    C --> F1 --> F2 --> G1
-    E2 --> G1
-    B2 --> G2
+    A --> B1 --> B2 --> B3 --> B4 --> Q
+    Q --> F1 --> Q
+    Q --> F2 --> Q
+    Q --> F3 --> Q
+    Q --> F4 --> Q
+    Q --> P1 --> P2 --> Q
+    Q --> E1 --> E2 --> D1
+    B2 --> D2
+    P2 --> D1
