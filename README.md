@@ -9,7 +9,7 @@
 ```mermaid
 graph TD
     subgraph "사용자 인터페이스/입력"
-        A[사용자 입력 (모델명/URL)]
+        A["사용자 입력 (모델명/URL)"] 
     end
 
     subgraph "데이터 관리 및 캐시"
