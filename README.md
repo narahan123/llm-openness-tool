@@ -21,13 +21,13 @@ graph TD
         arxiv[ArxivFetcher]
         hf[HuggingFaceFetcher]
         gh[GitHubFetcher]
-        blog[BlogCrawler]
+        blog[WebCrawler]
     end
 
     dispatcher --> arxiv --> raw_arxiv[논문 정보]
     dispatcher --> hf --> raw_hf[모델 카드]
     dispatcher --> gh --> raw_gh[GitHub 문서]
-    dispatcher --> blog --> raw_blog[웹 블로그]
+    dispatcher --> blog --> raw_blog[웹 사이트 혹은 블로그]
 
     subgraph ExtractParse[3. 정보 추출 및 파싱]
         rule_parse[규칙 기반 파싱]
