@@ -10,7 +10,7 @@
 graph TD
 
     %% 사용자 입력
-    input[사용자 입력 (모델명 or URL)]
+    user_input[사용자 입력 (모델명 or URL)]
 
     %% 입력 처리
     subgraph InputProcessor[1. Input Processor]
@@ -18,7 +18,7 @@ graph TD
     end
 
     %% FetchRequest 생성 및 병렬 분배
-    input --> parse_model --> request[FetchRequest 생성] --> dispatcher[플러그인에 병렬 전파]
+    user_input --> parse_model --> request[FetchRequest 생성] --> dispatcher[플러그인에 병렬 전파]
 
     %% 리소스 디스커버리
     subgraph ResourceDiscoveryAgent[2. Resource Discovery Agent]
@@ -54,8 +54,5 @@ graph TD
     end
 
     merge --> eval_model --> score_map --> output
-
-
-
 
 
