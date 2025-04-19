@@ -6,8 +6,9 @@
 
 다음은 시스템의 구성 요소와 데이터 흐름을 시각화한 다이어그램입니다.
 
-'''mermaid
-graph TD
+mermaid
+
+    graph TD
 
     %% 사용자 입력
     user_input[사용자 입력: 모델명 또는 URL]
