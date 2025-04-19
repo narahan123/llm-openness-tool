@@ -49,7 +49,7 @@ graph TD
     %% 평가 엔진
     subgraph EvaluationEngine[4. 평가 엔진]
         eval_model[항목별 자동 분류]
-        score_map[점수 계산 및 등급화]
+        score_map[점수 계산 및 등수화]
         output[리더보드 출력]
     end
 
