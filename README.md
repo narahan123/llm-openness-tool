@@ -12,7 +12,7 @@ graph TD
     %% 사용자 입력
     user_input[사용자 입력: 모델명 또는 URL]
 
-    %% 입력 처리
+    %% Input processor
     subgraph InputProcessor[1. Input Processor]
         parse_model[입력 파싱 및 모델 식별자 추출]
     end
@@ -20,7 +20,7 @@ graph TD
     %% FetchRequest 생성 및 병렬 분배
     user_input --> parse_model --> request[FetchRequest 생성] --> dispatcher[플러그인 병렬 전파]
 
-    %% 리소스 디스커버리
+    %% Resource Discovery Agent
     subgraph ResourceDiscoveryAgent[2. Resource Discovery Agent]
         arxiv[ArxivFetcher]
         hf[HuggingFaceFetcher]
@@ -33,7 +33,7 @@ graph TD
     dispatcher --> gh --> raw_gh[GitHub 문서]
     dispatcher --> blog --> raw_blog[웹 블로그]
 
-    %% 정보 추출 및 파싱
+    %% Information Extraction & Parsing Module
     subgraph ExtractParse[3. 정보 추출 및 파싱]
         rule_parse[규칙 기반 파싱]
         nlp_parse[경량 NLP 처리]
