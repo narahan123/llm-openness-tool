@@ -58,14 +58,15 @@ graph TD
     Mod4 -- 수동 오버라이드 (UI 연동) --> Mod4;
     Mod4 --> Output[최종 평가 결과];
 
-    %% 스타일링 (선택 사항)
-    classDef module fill:#lightblue,stroke:#333,stroke-width:2px;
-    classDef db fill:#lightgreen,stroke:#333,stroke-width:2px;
-    classDef queue fill:#orange,stroke:#333,stroke-width:2px;
-    classDef external fill:#lightgrey,stroke:#333,stroke-width:1px;
-    class A,Output fill:#white,stroke:#333,stroke-width:2px;
+    %% 스타일링
+    classDef module fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef db fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px;
+    classDef queue fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px;
+    classDef external fill:#eeeeee,stroke:#424242,stroke-width:1px;
+    class A,Output fill:#ffffff,stroke:#333,stroke-width:2px;
 
     class Mod1,Agent2,Mod3,Mod4 module;
     class DB,Cache db;
     class MQ queue;
     class ExtArxiv,ExtHF,ExtGH,ExtWeb external;
+
