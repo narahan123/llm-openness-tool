@@ -36,13 +36,13 @@ graph TD
     %% 파싱 모듈
     subgraph Parser[4. 정보 추출 및 파싱]
         P1[규칙/NLP 기반 파싱]
-        P2[추출 결과 (JSON)]
+        P2[추출 결과: JSON]
     end
 
     %% 평가 엔진
     subgraph Evaluator[5. 평가 엔진]
         E1[프레임워크 매핑 및 점수화]
-        E2[수동 오버라이드 (UI 연동)]
+        E2[수동 오버라이드 - UI 연동]
     end
 
     %% DB & 캐시
