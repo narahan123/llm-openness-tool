@@ -8,42 +8,31 @@
 
 ```mermaid
 graph TD
+    A[사용자 입력<br>모델명/URL] -->|모델 식별자 추출| B(입력 프로세스<br>모델 식별자 정규화<br>Fetchrequest 생성)
+    
+    B -->|Fetchrequest 병렬 전파| C{ArxivFetcher<br>arXiv API}
+    B -->|Fetchrequest 병렬 전파| D{HuggingFaceFetcher<br>Hub API}
+    B -->|Fetchrequest 병렬 전파| E{GitHubFetcher<br>GitHub API}
+    B -->|Fetchrequest 병렬 전파| F{BlogCrawler<br>웹 크롤러}
+    
+    C -->|정보 전달| G[정보 수집 프로세스<br>중앙 큐]
+    D -->|정보 전달| G
+    E -->|정보 전달| G
+    F -->|정보 전달| G
+    
+    G -->|경량 NLP 모델<br>의존 구문 분석<br>키워드 스팟팅| H[평가 항목 정보 추출<br>16개 항목 문장 해석]
+    
+    H -->|추출 정보 전달| I[평가 에이전트<br>코드 구동/재현 판단<br>텍스트 분류 모델<br>개방성 점수 도출]
+    
+    I -->|모델 정보 저장| J[리더보드 생성<br>데이터베이스 저장<br>개방성 점수/항목 비교<br>순위 도출]
 
-    user_input[사용자 입력: 모델명 또는 URL]
-
-    subgraph InputProcessor[1. Input Processor]
-        parse_model[입력 파싱 및 모델 식별자 추출]
-    end
-
-    user_input --> parse_model --> request[FetchRequest 생성] --> dispatcher[플러그인 병렬 전파]
-
-    subgraph ResourceDiscoveryAgent[2. Resource Discovery Agent]
-        arxiv[ArxivFetcher]
-        hf[HuggingFaceFetcher]
-        gh[GitHubFetcher]
-        blog[WebCrawler]
-    end
-
-    dispatcher --> arxiv --> raw_arxiv[논문 정보]
-    dispatcher --> hf --> raw_hf[모델 카드]
-    dispatcher --> gh --> raw_gh[GitHub 문서]
-    dispatcher --> blog --> raw_blog[웹 사이트 혹은 블로그]
-
-    subgraph ExtractParse[3. 정보 추출 및 파싱]
-        rule_parse[규칙 기반 파싱]
-        nlp_parse[경량 NLP 처리]
-        merge[평가 항목 정보 정리]
-    end
-
-    raw_arxiv --> rule_parse
-    raw_hf --> rule_parse
-    raw_gh --> rule_parse
-    raw_blog --> rule_parse
-    rule_parse --> nlp_parse --> merge
-
-    subgraph EvaluationEngine[4. 평가 엔진]
-        eval_model[항목별 자동 분류]
-        score_map[점수 계산 및 등수화]
-    end
-
-    merge --> eval_model --> score_map
+    style A fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style B fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style C fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style D fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style E fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style F fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style G fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style H fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style I fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style J fill:#f5f5f5,stroke:#333,stroke-width:1px
