@@ -36,3 +36,19 @@ graph TD
     style H fill:#f5f5f5,stroke:#333,stroke-width:1px
     style I fill:#f5f5f5,stroke:#333,stroke-width:1px
     style J fill:#f5f5f5,stroke:#333,stroke-width:1px
+
+    A[사용자 입력<br/>URL or org/model] --> B[모델 식별<br/>(model_Identifier.py)]
+    B --> C1[Hugging Face 정보 수집<br/>(huggingface_Fatcher.py)]
+    B --> C2[GitHub 정보 수집<br/>(github_Fatcher.py)]
+    B --> C3[arXiv 논문 수집<br/>(arxiv_Fetcher.py)]
+
+    C1 --> D1[Hugging Face 필터링<br/>(huggingface_Dispatcher.py)]
+    C2 --> D2[GitHub 필터링<br/>(github_Dispatcher.py)]
+    C3 --> D3[arXiv 필터링<br/>(arxiv_Dispatcher.py)]
+
+    D1 --> E[openness_Evaluator.py]
+    D2 --> E
+    D3 --> E
+
+    E --> F[개방성 점수 JSON 저장]
+    B --> G[모델 추론<br/>(inference.py)
