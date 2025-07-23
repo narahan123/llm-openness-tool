@@ -7,6 +7,7 @@
 다음은 시스템의 구성 요소와 데이터 흐름을 시각화한 다이어그램입니다.
 
 ```mermaid
+graph TD
     A[사용자 입력<br/>URL or org/model] --> B[모델 식별<br/>(model_Identifier.py)]
     B --> C1[Hugging Face 정보 수집<br/>(huggingface_Fatcher.py)]
     B --> C2[GitHub 정보 수집<br/>(github_Fatcher.py)]
