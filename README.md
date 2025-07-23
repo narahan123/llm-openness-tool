@@ -8,18 +8,18 @@
 
 ```mermaid
 graph TD
-    A[사용자 입력<br/>URL or org/model] --> B[모델 식별<br/>(model_Identifier.py)]
-    B --> C1[Hugging Face 정보 수집<br/>(huggingface_Fatcher.py)]
-    B --> C2[GitHub 정보 수집<br/>(github_Fatcher.py)]
-    B --> C3[arXiv 논문 수집<br/>(arxiv_Fetcher.py)]
+    A["사용자 입력\n(URL 또는 org/model)"] --> B["모델 식별\n(model_Identifier.py)"]
+    B --> C1["Hugging Face 수집\n(huggingface_Fatcher.py)"]
+    B --> C2["GitHub 수집\n(github_Fatcher.py)"]
+    B --> C3["arXiv 논문 수집\n(arxiv_Fetcher.py)"]
 
-    C1 --> D1[Hugging Face 필터링<br/>(huggingface_Dispatcher.py)]
-    C2 --> D2[GitHub 필터링<br/>(github_Dispatcher.py)]
-    C3 --> D3[arXiv 필터링<br/>(arxiv_Dispatcher.py)]
+    C1 --> D1["Hugging Face 필터링\n(huggingface_Dispatcher.py)"]
+    C2 --> D2["GitHub 필터링\n(github_Dispatcher.py)"]
+    C3 --> D3["arXiv 필터링\n(arxiv_Dispatcher.py)"]
 
-    D1 --> E[openness_Evaluator.py]
+    D1 --> E["개방성 평가\n(openness_Evaluator.py)"]
     D2 --> E
     D3 --> E
 
-    E --> F[개방성 점수 JSON 저장]
-    B --> G[모델 추론<br/>(inference.py)]
+    E --> F["개방성 점수 저장"]
+    B --> G["모델 추론\n(inference.py)"]
