@@ -1,0 +1,57 @@
+{
+  "1-5 (아키텍처 Architecture)": "이 항목은 모델의 기본 구조와 설계 상세 정보를 제공하며, 인용문에 따르면 'AX4VLForConditionalGeneration'이라는 아키텍처가 사용되고 있음을 확인할 수 있습니다. 코드에서 'class AX4VLForConditionalGeneration(BaseAXPretrainedModel, GenerationMixin):'와 같이 클래스 정의가 이루어졌으며, 'architectures': [\"AX4VLForConditionalGeneration\"]라는 부분에서 모델의 구조가 명시되어 있습니다. 또한, 'inc, ouc = config.in_hidden_size, config.out_hidden_size'와 'self.linear_1 = nn.Linear(config.in_hidden_size, config.out_hidden_size, bias=config.bias)'와 같은 코드 구문을 통해 모델의 레이어, 하이퍼파라미터 및 연결 방식 등이 상세히 지정되어 있음을 알 수 있습니다.",
+  "1-5 (아키텍처 Architecture)__evidence": [
+    {
+      "source": "config",
+      "quote": "\"architectures\": [\n    \"AX4VLForConditionalGeneration\"\n  ],"
+    },
+    {
+      "source": "py_files/modeling_ax4vl.py",
+      "quote": "class AX4VLForConditionalGeneration(BaseAXPretrainedModel, GenerationMixin):"
+    },
+    {
+      "source": "modeling_ax4vl.py",
+      "quote": "inc, ouc = config.in_hidden_size, config.out_hidden_size"
+    },
+    {
+      "source": "modeling_ax4vl.py",
+      "quote": "self.linear_1 = nn.Linear(config.in_hidden_size, config.out_hidden_size, bias=config.bias)"
+    }
+  ],
+  "1-6 (토크나이저 Tokenizer)": "이 항목은 한국어 특성에 특화된 토크나이저의 사용에 관한 정보를 제공하며, 인용문은 한국어의 고유한 표현과 문맥을 효과적으로 처리하기 위해 최적화된 토크나이저가 적용되었음을 설명하고 있습니다. '### 한국어 특화 토크나이저 적용'이라는 문구는 이 토크나이저가 한국어에 최적화되어 있음을 강조하며, 'tokenizer_class = \"AutoTokenizer\"'와 같은 코드 부분은 사용된 토크나이저의 클래스와 구조를 나타냅니다. 또한 'self.image_token = tokenizer.image_token if hasattr(tokenizer, \"image_token\") else image_token'과 같이 토크나이저에 이미지 토큰이 포함되는 조건 로직을 통해 토크나이저의 다기능성과 유연성을 보여줍니다.",
+  "1-6 (토크나이저 Tokenizer)__evidence": [
+    {
+      "source": "readme",
+      "quote": "### 한국어 특화 토크나이저 적용\n\n한국어의 고유한 특성을 잘 이해하도록 최적화된 토크나이저를 사용합니다. 이 토크나이저는 한국어의 다양한 표현과 문맥을 효과적으로 파악하도록 설계되었습니다."
+    },
+    {
+      "source": "py_files/processing_ax4vl.py",
+      "quote": "tokenizer_class = \"AutoTokenizer\""
+    },
+    {
+      "source": "py_files/processing_ax4vl.py",
+      "quote": "self.image_token = tokenizer.image_token if hasattr(tokenizer, \"image_token\") else image_token"
+    }
+  ],
+  "2-1 (하드웨어 Hardware)": "제공된 인용문에는 모델 훈련에 사용된 하드웨어 종류, 수량, 또는 계산 자원 규모에 관한 정보가 포함되어 있지 않습니다.",
+  "2-1 (하드웨어 Hardware)__evidence": [],
+  "2-2 (소프트웨어 Software)": "이 항목은 모델 훈련에 사용된 소프트웨어 환경에 관한 정보를 상세하게 담고 있습니다. 인용문에서 'pip install transformers>=4.49.0'과 '\"transformers_version\": \"4.49.0\"'를 통해 최신 버전의 Transformers 라이브러리가 사용되고 있음을 알 수 있으며, 'loss_fct = nn.CrossEntropyLoss()'는 모델 학습 중 사용되는 손실 함수가 교차 엔트로피 손실임을 나타냅니다. 또한 'from transformers.models.auto import AutoProcessor' 구문은 자동처리 기능을 제공하는 소프트웨어 컴포넌트의 사용을 보여주어, 전체 소프트웨어 환경이 체계적으로 구성되어 있음을 시사합니다.",
+  "2-2 (소프트웨어 Software)__evidence": [
+    {
+      "source": "readme",
+      "quote": "pip install transformers>=4.49.0"
+    },
+    {
+      "source": "config",
+      "quote": "\"transformers_version\": \"4.49.0\""
+    },
+    {
+      "source": "modeling_ax4vl.py",
+      "quote": "loss_fct = nn.CrossEntropyLoss()"
+    },
+    {
+      "source": "py_files/processing_ax4vl.py",
+      "quote": "from transformers.models.auto import AutoProcessor"
+    }
+  ]
+}

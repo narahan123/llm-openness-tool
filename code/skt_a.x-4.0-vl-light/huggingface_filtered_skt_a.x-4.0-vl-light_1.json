@@ -1,0 +1,62 @@
+{
+  "1-1 (가중치 Weights)": "주어진 인용문에서는 모델 가중치를 로드하기 위해 사용된 코드와 함께, 모델 가중치 파일들이 'model-00001-of-00004.safetensors'부터 'model-00004-of-00004.safetensors' 그리고 'model.safetensors.index.json'과 같이 여러 부분으로 나뉘어 배포되고 있음을 보여줍니다. 이러한 파일 나열은 가중치의 파일 분할 저장 방식과 공개 배포의 형태, 접근 가능한 위치 및 파일 명명 규칙을 명확하게 증명하고 있어, 모델 가중치가 누구나 접근할 수 있게 공개되어 있음을 확인할 수 있습니다.",
+  "1-1 (가중치 Weights)__evidence": [
+    {
+      "source": "readme",
+      "quote": "model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype=torch.bfloat16).to(device='cuda')"
+    },
+    {
+      "source": "files",
+      "quote": "model-00001-of-00004.safetensors"
+    },
+    {
+      "source": "files",
+      "quote": "model-00002-of-00004.safetensors"
+    },
+    {
+      "source": "files",
+      "quote": "model-00003-of-00004.safetensors"
+    },
+    {
+      "source": "files",
+      "quote": "model-00004-of-00004.safetensors"
+    },
+    {
+      "source": "files",
+      "quote": "model.safetensors.index.json"
+    }
+  ],
+  "1-2 (코드 Code)": "인용문에 포함된 예제 코드 블록은 모델 훈련 및 실행을 위한 구체적인 Python 스크립트를 제공하고 있습니다. 코드 내에서는 Hugging Face의 AutoModelForCausalLM과 AutoProcessor를 사용하여 모델과 프로세서를 로드하는 과정과, 이미지 데이터를 불러와 처리한 후 추론 결과를 반환하는 일련의 파일 입출력 과정이 상세히 기술되어 있습니다. 또한, 'class BaseAXProcessor(ProcessorMixin):'와 같은 코드 조각은 모델 관련 코드가 공개된 범위와 구조를 암시하여, 모델을 실제 사용하고 확장할 수 있는 코드가 모두 공개되어 있음을 보여줍니다.",
+  "1-2 (코드 Code)__evidence": [
+    {
+      "source": "readme",
+      "quote": "#### Example Usage\n\n```python\nimport torch\nfrom transformers import AutoModelForCausalLM, AutoProcessor\nfrom PIL import Image\nimport requests\nfrom io import BytesIO\n\n\n\nmodel_name = \"skt/A.X-4.0-VL-Light\"\nmodel = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True, torch_dtype=torch.bfloat16).to(device='cuda')\nprocessor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)\n\nurl = \"https://huggingface.co/skt/A.X-4.0-VL-Light/resolve/main/assets/image.png\"\n# 이미지 출처: 국가유산포털 (https://www.heritage.go.kr/unisearch/images/national_treasure/thumb/2021042017434700.JPG)\n\nresponse = requests.get(url)\nresponse.raise_for_status()\nimage = Image.open(BytesIO(response.content))\n\nmessages = [\n    {\n        \"role\": \"user\",\n        \"content\": [\n            {\"type\": \"image\"},\n            {\"type\": \"text\", \"text\": \"이미지에 대해서 설명해줘.\"},\n        ],\n    }\n]\n\ninputs = processor(\n    images=[image],\n    conversations=[messages],\n    padding=True,\n    return_tensors=\"pt\",\n).to(\"cuda\")\n\n# Decoding parameters (top_p, temperature, top_k, repetition_penalty) should be tuned depending on the generation task.\ngeneration_kwargs = {\n    \"max_new_tokens\": 256,\n    \"top_p\": 0.8,\n    \"temperature\": 0.5,\n    \"top_k\": 20,\n    \"repetition_penalty\": 1.05,\n    \"do_sample\": True,\n}\ngenerated_ids = model.generate(**inputs, **generation_kwargs)\ngenerated_ids_trimmed = [\n    out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)\n]\nresponse = processor.batch_decode(\n    generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False\n)\nprint(response[0])\n```"
+    },
+    {
+      "source": "py_files/processing_ax4vl.py",
+      "quote": "class BaseAXProcessor(ProcessorMixin):"
+    }
+  ],
+  "1-3 (라이선스 License)": "제공된 인용문에서는 모델의 라이선스가 Apache License 2.0임을 명시하고 있으며, 라이선스 파일 링크와 함께 상세한 저작권 및 사용 조건이 포함되어 있습니다. 인용문 내의 텍스트는 변경된 모델 가중치와 토크나이저 파일 등 모든 파일에 대해 허용된 사용, 수정, 배포 및 상업적 이용이 Apache 2.0 라이선스 하에서 이루어짐을 명확히 전달하고 있어, 사용자에게 명확한 권리와 제한 사항을 안내합니다.",
+  "1-3 (라이선스 License)__evidence": [
+    {
+      "source": "readme",
+      "quote": "license: apache-2.0\nlicense_link: https://huggingface.co/skt/A.X-4.0-VL-Light/blob/main/LICENSE"
+    },
+    {
+      "source": "license_file",
+      "quote": "Copyright (c) 2025 SK Telecom Co., Ltd. All rights reserved.\n\nUnless otherwise stated, all files in this repository (including modified model weights \nand tokenizer files) are distributed under the terms of the Apache License, Version 2.0 \n(the \"License\"). You may obtain a copy of the License at:\n\n    http://www.apache.org/licenses/LICENSE-2.0"
+    },
+    {
+      "source": "files",
+      "quote": "LICENSE"
+    }
+  ],
+  "1-4 (논문 Paper)": "인용문에서는 공식 논문 형식의 Citation 정보가 제공되어 있으며, '@article' 형식의 BibTeX 인용문을 통해 모델과 관련된 기술 문서가 존재함을 확인할 수 있습니다. 여기에 모델 제목과 저자, 연도 및 연결된 URL이 포함되어 있어, 모델의 기술적 근거와 연구 배경을 설명하는 공식 문서가 공개되어 있으며 이를 통해 모델의 신뢰성과 학술적 기반을 확인할 수 있습니다.",
+  "1-4 (논문 Paper)__evidence": [
+    {
+      "source": "readme",
+      "quote": "## Citation\n\n```\n@article{SKTAdotX4VLLight,\n  title={A.X 4.0 VL Light},\n  author={SKT AI Model Lab},\n  year={2025},\n  url={https://huggingface.co/skt/A.X-4.0-VL-Light}\n}\n```"
+    }
+  ]
+}

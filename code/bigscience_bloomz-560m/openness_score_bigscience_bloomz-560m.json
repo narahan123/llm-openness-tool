@@ -1,0 +1,70 @@
+{
+  "model": "bigscience/bloomz-560m",
+  "scores": {
+    "1-2 코드": {
+      "score": 1,
+      "reason": "The evidence shows a complete code snippet for loading and executing the model, indicating that the entire implementation code is publicly available."
+    },
+    "1-3 라이선스": {
+      "score": 0.5,
+      "reason": "The license is specified as 'bigscience-bloom-rail-1.0', which implies that there are restrictions (typical of RAIL licenses), making it semi-open."
+    },
+    "1-4 논문": {
+      "score": 1,
+      "reason": "An official paper with an arXiv link is referenced, clearly documenting the model's methodology."
+    },
+    "2-1 하드웨어": {
+      "score": 1,
+      "reason": "Detailed information about the hardware configuration (AMD CPUs, 64 A100 GPUs across nodes, and connection details) is provided."
+    },
+    "2-2 소프트웨어": {
+      "score": 1,
+      "reason": "Software details such as the use of Megatron-DeepSpeed and specific PyTorch versions are clearly mentioned, providing complete software specifications."
+    },
+    "2-3 API": {
+      "score": 0,
+      "reason": "No API information or documentation is provided in the evidence."
+    },
+    "3-1 사전학습": {
+      "score": 0.5,
+      "reason": "The pre-training methodology is mentioned (with references to Bloom's pretraining and dataset names), but details are not fully sufficient for reproducibility."
+    },
+    "3-2 파인튜닝": {
+      "score": 1,
+      "reason": "Comprehensive fine-tuning details are provided, including specific steps, token counts, parallel layouts, and precision settings."
+    },
+    "3-3 강화학습": {
+      "score": 0,
+      "reason": "There is no information provided regarding any reinforcement learning methods."
+    },
+    "4-1 사전학습 데이터": {
+      "score": 1,
+      "reason": "Detailed pre-training data information (token counts and dataset origins like ROOTS and mC4) is provided in the arXiv evidence."
+    },
+    "4-2 파인튜닝 데이터": {
+      "score": 1,
+      "reason": "Fine-tuning data details are clearly identified with references to datasets such as xP3 and P3 along with their links."
+    },
+    "4-3 강화학습 데이터": {
+      "score": 0,
+      "reason": "No information regarding reinforcement learning data is provided."
+    },
+    "4-4 데이터 필터링": {
+      "score": 1,
+      "reason": "The filtering strategy is clearly described, including token limit thresholds and packing methods."
+    },
+    "1-1 가중치": {
+      "score": 1,
+      "reason": "허깅페이스에 모델 가중치 공개"
+    },
+    "1-5 아키텍처": {
+      "score": 1,
+      "reason": "허깅페이스 카드에 아키텍처 정보 공개"
+    },
+    "1-6 토크나이저": {
+      "score": 1,
+      "reason": "허깅페이스 카드/config에 토크나이저 정보 공개"
+    }
+  },
+  "total_score": 12.0
+}
