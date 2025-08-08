@@ -67,14 +67,16 @@ EVIDENCE_LIMIT_PER_KEY = 300
 MODEL_NAME = os.getenv("OPENAI_MODEL_GH_DISPATCHER", "o3-mini")
 
 # ───────────── 유틸 ─────────────
-def _js(o: Any) -> str: return json.dumps(o, ensure_ascii=False, indent=2)
+def _js(o: Any) -> str:                      # ← 기존 그대로
+    return json.dumps(o, ensure_ascii=False, indent=2)
 
-def _chunk(s: str, size: int, ov: int) -> List[str]:
+def _chunk(s: str, size: int, ov: int) -> List[str]:   # ← 기존 그대로
     out, n, i = [], len(s), 0
     while i < n:
         end = min(i + size, n)
         out.append(s[i:end])
-        if end == n: break
+        if end == n:
+            break
         i = end - ov if end - ov > i else end
     return out
 
@@ -193,22 +195,29 @@ def _collect(g: List[str], text: str) -> Dict[str, List[Dict[str, str]]]:
         ev[k] = _dedup_evid(ev[k], EVIDENCE_LIMIT_PER_KEY)
     return ev
 
+# ───────────── NEW: 문자열 캐스팅 헬퍼 ─────────────
+def _as_text(v):
+    return v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
+
 # ───────────── 단계 2: 요약 ─────────────
-def _summarize(g: List[str], ev: Dict[str, List[Dict[str, str]]]) -> Dict[str, str]:
+def _summarize(g: List[str], ev: Dict[str, List[Dict[str, str]]]) -> Dict[str, Any]:
     quotes = {LABELS[k]: [e["quote"] for e in ev[LABELS[k]]] for k in g}
-    ans = _chat_json(_BASE_SUMMARY_SYS, _summary_inst(g) +
-                     "\n=== QUOTES ===\n" + _js(quotes))
+    ans = _chat_json(_BASE_SUMMARY_SYS, _summary_inst(g) + "\n=== QUOTES ===\n" + _js(quotes))
     return {LABELS[k]: ans.get(LABELS[k], "") for k in g}
 
-# ───────────── 병합 ─────────────
-def _merge(summary: Dict[str, str], ev: Dict[str, List[Dict[str, str]]]) -> Dict[str, Any]:
-    return {lbl: summary[lbl].strip() for lbl in summary} | {
-        f"{lbl}__evidence": ev.get(lbl, []) for lbl in summary
-    }
+# ─── _merge 함수 교체 ───
+def _merge(summary: Dict[str, Any],
+           ev: Dict[str, List[Dict[str, str]]]) -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+    for lbl, val in summary.items():
+        out[lbl] = _as_text(val).strip()
+        out[f"{lbl}__evidence"] = ev.get(lbl, [])
+    return out
 
 def _merge_all(lst: List[Dict[str, Any]]) -> Dict[str, Any]:
-    m = {}
-    for d in lst: m.update(d)
+    m: Dict[str, Any] = {}
+    for d in lst:
+        m.update(d)
     return m
 
 # ───────────── 외부 함수 ─────────────

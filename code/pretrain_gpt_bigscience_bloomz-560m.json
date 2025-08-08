@@ -1,0 +1,4 @@
+{
+  "input_model": "bigscience/bloomz-560m",
+  "pretrain_model": "bigscience/bloom-560m"
+}

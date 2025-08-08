@@ -17,10 +17,78 @@ from huggingface_Dispatcher import filter_hf_features
 from openness_Evaluator import evaluate_openness_from_files
 from inference import run_inference
 
+import html
+
 # 환경 변수 로드 및 OpenAI 클라이언트 초기화
 dotenv_path = os.path.join(os.getcwd(), '.env')
 load_dotenv(dotenv_path)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# ──────────────────────────────────────────────────────────────
+# GPT-4o로 프리트레인(base) 모델 추정
+def gpt_detect_base_model(hf_id: str) -> str | None:
+    """
+    • 입력 모델이 파인튜닝 모델이면 → 프리트레인 모델 ID 반환
+    • 이미 프리트레인(=원본) 모델이면 → None 반환
+    • 확신 없다면 GPT가 null 반환 → None
+    """
+    import textwrap
+
+    def _hf_card_readme(mid: str, max_len: int = 12000) -> str:
+        try:
+            card = requests.get(
+                f"https://huggingface.co/api/models/{mid}?full=true"
+            ).json().get("cardData", {}) or {}
+            txt = (card.get("content") or "")[:max_len]
+            for br in ["main", "master"]:
+                r = requests.get(f"https://huggingface.co/{mid}/raw/{br}/README.md")
+                if r.status_code == 200:
+                    txt += "\n\n" + r.text[:max_len]
+                    break
+            return txt
+        except Exception:
+            return ""
+
+    prompt_sys = textwrap.dedent(f"""
+        당신은 AI 모델 정보를 분석해 ‘프리트레인(원) 모델’을 찾아내는 전문가입니다.
+
+        • 입력 모델 **{hf_id}** 이(가) 파인튜닝 모델일지 모릅니다.
+        • 아래에 제공되는 Hugging Face 카드 / README 내용을 읽고
+          ➡️ 파생되었을 가능성이 가장 높은 프리트레인 모델 ID를 추정하십시오.
+        • 이미 프리트레인 모델이면 null을 반환하십시오.
+
+        ➤ 출력 형식 → JSON 한 줄만! 예:
+            {{ "pretrain_model": "bigscience/bloom-560m" }}
+          또는
+            {{ "pretrain_model": null }}
+    """).strip()
+
+    ctx = _hf_card_readme(hf_id)
+    if not ctx:
+        return None
+
+    try:
+        resp = client.chat.completions.create(
+            model="gpt-4o-mini",
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": prompt_sys},
+                {"role": "user",   "content": ctx}
+            ],
+            temperature=0
+        )
+        pred = json.loads(resp.choices[0].message.content)
+        pre_id = pred.get("pretrain_model")
+        # 검증: 존재하고 입력과 다를 때만 사용
+        if pre_id and isinstance(pre_id, str):
+            pre_id = pre_id.strip()
+            if pre_id.lower() != hf_id.lower() and test_hf_model_exists(pre_id):
+                return pre_id
+    except Exception as e:
+        print("⚠️ GPT 프리트레인 탐지 실패:", e)
+    return None
+# ──────────────────────────────────────────────────────────────
+
 
 # 1. 입력 파싱: URL 또는 org/model
 def extract_model_info(input_str: str) -> dict:
@@ -342,10 +410,52 @@ def run_all_fetchers(user_input: str):
     else:
         print("⚠️ GitHub 정보 없음")
 
+    # ─── GPT 기반 프리트레인 모델 탐지 + 파이프라인 ───────────────
+    base_model_id = gpt_detect_base_model(hf_id) if hf_id else None
+    if base_model_id:
+        print(f"🧱 GPT가 찾은 프리트레인 모델: {base_model_id}")
+
+        # 1) Hugging Face fetch/dispatch
+        huggingface_fetcher(base_model_id, save_to_file=True, output_dir=outdir)
+        from pretrain_hf_Dispatcher import filter_pretrain_hf
+        filter_pretrain_hf(base_model_id, output_dir=outdir)
+
+        # 2) GitHub (있을 때만)
+        base_gh = find_github_in_huggingface(base_model_id)
+        if base_gh:
+            try:
+                github_fetcher(base_gh, save_to_file=True, output_dir=outdir)
+                from pretrain_github_Dispatcher import filter_pretrain_gh
+                filter_pretrain_gh(base_gh, output_dir=outdir)
+            except Exception as e:
+                print("⚠️ GH fetch/dispatch 실패:", e)
+        else:
+            print("⚠️ 프리트레인 모델의 GitHub 레포를 찾지 못해 GH fetcher 건너뜀")
+
+        # 3) arXiv (있을 때만)
+        try:
+            ax_ok = arxiv_fetcher_from_model(base_model_id,
+                                             save_to_file=True,
+                                             output_dir=outdir)
+            if ax_ok:
+                from pretrain_arxiv_Dispatcher import filter_pretrain_arxiv
+                filter_pretrain_arxiv(base_model_id, output_dir=outdir)
+            else:
+                print("⚠️ 논문 링크를 찾지 못해 arXiv fetcher 건너뜀")
+        except Exception as e:
+            print("⚠️ arXiv fetch/dispatch 실패:", e)
+    else:
+        base_model_id = None  # GPT가 null 반환 → 프리트레인 없음
+
+
     # 8. Openness 평가 수행
     try:
         print("📝 개방성 평가 시작...")
-        eval_res = evaluate_openness_from_files(full, base_dir=str(outdir))
+        eval_res = evaluate_openness_from_files(
+            full,
+            base_dir=str(outdir),
+            base_model_id=base_model_id        # ← 인자 추가
+        )
         base = full.replace("/", "_")
         outfile = Path(outdir) / f"openness_score_{base}.json"
         print(f"✅ 개방성 평가 완료.  결과 파일: {outfile}")
@@ -363,21 +473,57 @@ def make_model_dir(user_input: str) -> Path:
     path = Path(safe)
     path.mkdir(parents=True, exist_ok=True)
     return path
+###################################################################
+# if __name__ == "__main__":
+#     user_input = input("🌐 HF/GH URL 또는 org/model: ").strip()
+#     model_dir = make_model_dir(user_input)
+#     print(f"📁 생성/사용할 폴더: {model_dir}")
+#     run_all_fetchers(user_input)
 
+#     info = extract_model_info(user_input)
+#     hf_id = info['hf_id']
+
+#     if test_hf_model_exists(hf_id):
+#         with open(model_dir / "identified_model.txt", "w", encoding="utf-8") as f:
+#             f.write(hf_id)
+#         print(f"✅ 모델 ID 저장 완료: {model_dir / 'identified_model.txt'}")
+#######################################################################
 if __name__ == "__main__":
-    user_input = input("🌐 HF/GH URL 또는 org/model: ").strip()
-    model_dir = make_model_dir(user_input)
-    print(f"📁 생성/사용할 폴더: {model_dir}")
-    run_all_fetchers(user_input)
+    try:
+        n = int(input("🔢 돌릴 모델 개수: ").strip())
+    except ValueError:
+        print("숫자를 입력하세요."); exit(1)
 
-    info = extract_model_info(user_input)
-    hf_id = info['hf_id']
+    models: list[str] = []
+    for i in range(1, n + 1):
+        m = input(f"[{i}/{n}] 🌐 HF/GH URL 또는 org/model: ").strip()
+        if m:
+            models.append(m)
 
-    if test_hf_model_exists(hf_id):
-        with open(model_dir / "identified_model.txt", "w", encoding="utf-8") as f:
-            f.write(hf_id)
-        print(f"✅ 모델 ID 저장 완료: {model_dir / 'identified_model.txt'}")
+    print("\n🚀 총", len(models), "개 모델을 순차 처리합니다.\n")
 
-    # # ✅ 바로 추론까지 실행
-    # prompt = input("📝 프롬프트를 입력하세요: ")
-    # run_inference(hf_id, prompt)
+    for idx, user_input in enumerate(models, 1):
+        print(f"\n======== {idx}/{len(models)} ▶ {user_input} ========")
+        try:
+            model_dir = make_model_dir(user_input)
+            print(f"📁 생성/사용할 폴더: {model_dir}")
+            run_all_fetchers(user_input)
+
+            info  = extract_model_info(user_input)
+            hf_id = info["hf_id"]
+            if test_hf_model_exists(hf_id):
+                with open(model_dir / "identified_model.txt", "w", encoding="utf-8") as f:
+                    f.write(hf_id)
+                print(f"✅ 모델 ID 저장 완료: {model_dir / 'identified_model.txt'}")
+
+        except Exception as e:
+            print("❌ 처리 중 오류 발생:", e)
+            # 에러 로그 남기고 다음 모델로 계속
+            continue
+
+    print("\n🎉 모든 작업이 끝났습니다.")
+
+
+    # ✅ 바로 추론까지 실행
+    prompt = input("📝 프롬프트를 입력하세요: ")
+    run_inference(hf_id, prompt)

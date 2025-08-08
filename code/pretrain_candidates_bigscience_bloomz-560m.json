@@ -1,0 +1,113 @@
+{
+  "input_model": "bigscience/bloomz-560m",
+  "candidates": [
+    {
+      "model_id": "google/mt5-small",
+      "score": 14
+    },
+    {
+      "model_id": "google/mt5-base",
+      "score": 4
+    },
+    {
+      "model_id": "bigscience/bloom",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/mt0-small",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/mt0-base",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/mt0-large",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/mt0-xl",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/mt0-xxl",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz-1b1",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz-1b7",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz-3b",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz-7b1",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/mt0-xxl-mt",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz-7b1-mt",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz-mt",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/mt0-xxl-p3",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz-7b1-p3",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloomz-p3",
+      "score": 0
+    },
+    {
+      "model_id": "google/mt5-large",
+      "score": 0
+    },
+    {
+      "model_id": "google/mt5-xl",
+      "score": 0
+    },
+    {
+      "model_id": "google/mt5-xxl",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloom-560m",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloom-1b1",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloom-1b7",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloom-3b",
+      "score": 0
+    },
+    {
+      "model_id": "bigscience/bloom-7b1",
+      "score": 0
+    }
+  ]
+}

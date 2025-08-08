@@ -114,6 +114,7 @@ HuggingFace·GitHub 정보는 보조 참고만 허용됩니다.
   "total_score": 12.5
 }}
 다른 주석·백틱·불필요 텍스트를 포함하면 안 됩니다.
+- 3-1·4-1 항목은 data.pretrain 리스트가 존재 할 시 그 리스트에 담긴 정보(프리트레인 모델)에서 먼저 근거를 찾으십시오.  # 추가
 """.strip()
 
 # ─────────── 자동 1점 항목 ───────────
@@ -123,16 +124,35 @@ AUTO_OPEN_LABELS = {
     "1-6 토크나이저": "허깅페이스 카드/config에 토크나이저 정보 공개",
 }
 
+# ─────────── 프리트레인 JSON 로더 ─────────── 프리트레인 JSON 로더 헬퍼
+def _load_pretrain_parts(base_id: str | None, base_dir: Path) -> list[dict]:
+    """
+    pretrain_hf|gh|arxiv_{base}.json 3종 로드 → 리스트 반환
+    """
+    if not base_id:
+        return []
+    b = base_id.replace("/", "_").lower()
+    out = []
+    for src in ["hf", "gh", "arxiv"]:
+        p = base_dir / f"pretrain_{src}_{b}.json"
+        if p.exists() and p.stat().st_size:
+            try:
+                out.append(json.load(open(p, encoding="utf-8")))
+            except json.JSONDecodeError:
+                print("⚠️ JSON 파싱 실패:", p)
+    return out
+
 def _auto_scores(hf_json: Dict[str, Any]) -> Dict[str, Dict]:
     return {lbl: {"score": 1, "reason": reason}
             for lbl, reason in AUTO_OPEN_LABELS.items()} if hf_json else {}
 
 # ─────────── GPT 평가 함수 ───────────
 def _gpt_evaluate(model: str,
-                  hf: Dict, gh: Dict, ax: Dict) -> Dict[str, Dict]:
+                  hf: Dict, gh: Dict, ax: Dict,
+                  pretrain: list[Dict]) -> Dict[str, Dict]: 
     payload = {
         "model": model,
-        "data": {"huggingface": hf, "github": gh, "arxiv": ax}
+        "data": {"pretrain": pretrain, "huggingface": hf, "github": gh, "arxiv": ax}
     }
     rsp = client.chat.completions.create(
         model="o3-mini",
@@ -155,10 +175,10 @@ def _gpt_evaluate(model: str,
 
 # ─────────── 메인 평가 함수 ───────────
 def evaluate_openness(model_name: str,
-                      hf_json=None, gh_json=None, arxiv_json=None) -> Dict:
+                      hf_json=None, gh_json=None, arxiv_json=None, pretrain_parts=None) -> Dict:
     hf, gh, ax = hf_json or {}, gh_json or {}, arxiv_json or {}
-
-    scores = _gpt_evaluate(model_name, hf, gh, ax)
+    pretrain = pretrain_parts or []
+    scores = _gpt_evaluate(model_name, hf, gh, ax, pretrain)
     scores.update(_auto_scores(hf))           # 자동 1점 항목 추가/덮어쓰기
 
     total = sum(v["score"] for v in scores.values())
@@ -173,7 +193,9 @@ def _load(p):
             print("⚠️ JSON 파싱 실패:", p)
     return {}
 
-def evaluate_openness_from_files(model_name: str, base_dir: str | Path = "."):
+def evaluate_openness_from_files(model_name: str,
+                                 base_dir: str | Path = ".",
+                                 base_model_id: str | None = None):
     base = model_name.replace("/", "_").lower()
     base_dir = Path(base_dir)
 
@@ -197,7 +219,9 @@ def evaluate_openness_from_files(model_name: str, base_dir: str | Path = "."):
     gh = _load_from_base(f"github_filtered_final_{base}.json")
     ax = _load_from_base(f"arxiv_filtered_final_{base}.json")
 
-    res = evaluate_openness(model_name, hf, gh, ax)
+    pretrain_parts = _load_pretrain_parts(base_model_id, base_dir)
+
+    res = evaluate_openness(model_name, hf_json=hf,gh_json=gh, arxiv_json=ax, pretrain_parts=pretrain_parts)
     out = base_dir / f"openness_score_{base}.json"
     json.dump(res, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
     print("📝 평가 결과 저장:", out)
