@@ -1,0 +1,125 @@
+{
+  "1-1 (가중치 Weights)": "인용문에 따르면, 모델의 가중치는 Hugging Face Hub에서 다운로드할 수 있도록 제공되고 있습니다. 특히, Hugging Face CLI를 통해 직접 다운로드가 가능하다는 점을 강조하고 있어, 사용자가 쉽게 접근할 수 있는 공개된 가중치임을 보여줍니다.",
+  "1-1 (가중치 Weights)__evidence": [
+    {
+      "source": "readme",
+      "quote": "You can download the model weights from the [Hugging Face Hub](https://huggingface.co/collections/openai/gpt-oss-68911959590a1634ba11c7a4) directly from Hugging Face CLI:"
+    }
+  ],
+  "1-2 (코드 Code)": "제공된 코드 스니펫은 transformers 라이브러리의 pipeline을 활용하여 모델을 불러오고 텍스트 생성을 수행하는 과정을 상세히 보여줍니다. 이 코드 예제는 모델 ID를 사용하여 'openai/gpt-oss-20b' 모델을 불러오며, torch의 dtype과 device 설정을 자동으로 구성한 후, 메시지를 입력받아 최대 256 토큰의 새 텍스트를 생성하는 방식으로 모델의 기능을 시연합니다.",
+  "1-2 (코드 Code)__evidence": [
+    {
+      "source": "readme",
+      "quote": "from transformers import pipeline\nimport torch\n\nmodel_id = \"openai/gpt-oss-20b\"\n\npipe = pipeline(\n    \"text-generation\",\n    model=model_id,\n    torch_dtype=\"auto\",\n    device_map=\"auto\",\n)\n\nmessages = [\n    {\"role\": \"user\", \"content\": \"Explain quantum mechanics clearly and concisely.\"},\n]\n\noutputs = pipe(\n    messages,\n    max_new_tokens=256,\n)\nprint(outputs[0][\"generated_text\"][-1])"
+    }
+  ],
+  "1-3 (라이선스 License)": "인용문은 라이선스 정보에 대해 Apache License Version 2.0이 명시되어 있음을 보여줍니다. 이는 'license: apache-2.0'이라는 명시적인 태그와 함께 제공되어, 사용, 수정, 배포 및 상업적 이용에 관한 허용 권한을 가진 라이선스임을 확인시켜 줍니다.",
+  "1-3 (라이선스 License)__evidence": [
+    {
+      "source": "readme",
+      "quote": "license: apache-2.0"
+    },
+    {
+      "source": "license_file",
+      "quote": "Apache License\n                           Version 2.0, January 2004"
+    }
+  ],
+  "1-4 (논문 Paper)": "제공된 인용문에서는 모델의 관련 문서와 자료에 대해 두 가지 링크가 포함되어 있습니다. 하나는 모델 카드에 대한 링크이며, 다른 하나는 OpenAI 블로그로 연결되는 링크로, 이를 통해 모델의 공식 문서와 기술적 세부사항들을 추가적으로 확인할 수 있도록 하고 있습니다.",
+  "1-4 (논문 Paper)__evidence": [
+    {
+      "source": "readme",
+      "quote": "<a href=\"https://openai.com/index/gpt-oss-model-card\"><strong>Model card</strong></a> ·"
+    },
+    {
+      "source": "readme",
+      "quote": "<a href=\"https://openai.com/index/introducing-gpt-oss/\"><strong>OpenAI blog</strong></a>"
+    }
+  ],
+  "1-5 (아키텍처 Architecture)": "Evidence는 모델의 아키텍처 세부 정보로서 'architectures': [\"GptOssForCausalLM\"]라는 항목을 보여주며, 'num_hidden_layers'가 24로 명시되어 있음으로써 모델이 24개의 은닉 레이어를 갖춘 심도 깊은 구조임을 알 수 있습니다. 이 정보를 바탕으로 모델의 설계와 하이퍼파라미터 설정이 극단적인 인과 관계 언어 모델링에 최적화되어 있음을 유추할 수 있으며, 전체 아키텍처의 설계 철학과 관련된 구체적 설정들을 잘 드러내고 있습니다.",
+  "1-5 (아키텍처 Architecture)__evidence": [
+    {
+      "source": "config",
+      "quote": "\"architectures\": [\n    \"GptOssForCausalLM\"\n  ],"
+    },
+    {
+      "source": "config",
+      "quote": "\"num_hidden_layers\": 24,"
+    }
+  ],
+  "1-6 (토크나이저 Tokenizer)": "제공된 증거에서는 'tokenizer.json', 'tokenizer_config.json', 'special_tokens_map.json' 파일이 언급되어 있어, 사용된 토크나이저가 구성 파일 기반으로 정밀하게 설정되고 관리되었음을 보여줍니다. 이는 토크나이저의 이름, 구조, 그리고 다운로드 가능 여부와 같은 세부 사항들을 포함하는 구성을 반영하며, 토크나이저의 효율성과 재현성을 보장하기 위한 사전 정의된 파일들이 존재함을 뜻합니다.",
+  "1-6 (토크나이저 Tokenizer)__evidence": [
+    {
+      "source": "files",
+      "quote": "tokenizer.json"
+    },
+    {
+      "source": "files",
+      "quote": "tokenizer_config.json"
+    },
+    {
+      "source": "files",
+      "quote": "special_tokens_map.json"
+    }
+  ],
+  "2-1 (하드웨어 Hardware)": "증거는 두 가지 다른 모델 버전(gpt-oss-120b와 gpt-oss-20b)의 하드웨어 요구사항을 설명하고 있습니다. gpt-oss-120b 모델은 117B 파라미터 중 5.1B만이 활성화되는 방식으로 80GB GPU(예: NVIDIA H100 또는 AMD MI300X)를 사용하여 생산 및 고난이도 추론 작업에 적합하다는 점이 강조됩니다. 반면, gpt-oss-20b 모델은 소비자용 하드웨어에서도 미세 조정이 가능하도록 설계되었다고 명시되어 있어, 전체 계산 자원 규모와 하드웨어의 유연성이 모두 고려된 훈련 환경을 나타냅니다.",
+  "2-1 (하드웨어 Hardware)__evidence": [
+    {
+      "source": "readme",
+      "quote": "- `gpt-oss-120b` — for production, general purpose, high reasoning use cases that fit into a single 80GB GPU (like NVIDIA H100 or AMD MI300X) (117B parameters with 5.1B active parameters)"
+    },
+    {
+      "source": "readme",
+      "quote": "This smaller model `gpt-oss-20b` can be fine-tuned on consumer hardware, whereas the larger [`gpt-oss-120b`](https://huggingface.co/openai/gpt-oss-120b) can be fine-tuned on a single H100 node."
+    }
+  ],
+  "2-2 (소프트웨어 Software)": "제공된 정보는 훈련에 사용된 소프트웨어 스택에 대해 상세히 설명합니다. 'library_name: transformers'와 'pip install -U transformers kernels torch' 명령어를 통해 최신 버전의 transformers 라이브러리와 함께 커널 및 torch 등의 관련 소프트웨어가 함께 설치되었음을 명시합니다. 이는 훈련 프로세스의 효율성과 최신 기능 활용을 위한 세밀한 소프트웨어 환경 설정을 반영하고 있습니다.",
+  "2-2 (소프트웨어 Software)__evidence": [
+    {
+      "source": "readme",
+      "quote": "library_name: transformers"
+    },
+    {
+      "source": "readme",
+      "quote": "pip install -U transformers kernels torch"
+    }
+  ],
+  "2-3 (API)": "The evidence quotes indicate that the model can be accessed through API implementations designed to provide an OpenAI-compatible webserver. One quote states, 'Alternatively, you can run the model via [Transformers Serve] to spin up a OpenAI-compatible webserver,' while another adds, 'vLLM recommends using [uv] for Python dependency management. You can use vLLM to spin up an OpenAI-compatible webserver.' These details confirm that the model's API functionality is built around established platforms with provided documentation links and usage examples, ensuring that end users have multiple methods to deploy and interact with the model via standardized APIs.",
+  "2-3 (API)__evidence": [
+    {
+      "source": "readme",
+      "quote": "Alternatively, you can run the model via [`Transformers Serve`](https://huggingface.co/docs/transformers/main/serving) to spin up a OpenAI-compatible webserver:"
+    },
+    {
+      "source": "readme",
+      "quote": "vLLM recommends using [uv](https://docs.astral.sh/uv/) for Python dependency management. You can use vLLM to spin up an OpenAI-compatible webserver."
+    }
+  ],
+  "3-1 (사전학습 Pre-training)": "The single evidence quote provided explains that 'Both models were trained on our [harmony response format] and should only be used with the harmony format as it will not work correctly otherwise.' This summary highlights that the pre-training stage was executed using a specific method that relies on the 'harmony response format.' The approach implies a tightly controlled data flow and procedural setup during training, where adherence to a particular format is critical for the model to function properly, reflecting specific decisions in methodology and parameter configurations.",
+  "3-1 (사전학습 Pre-training)__evidence": [
+    {
+      "source": "readme",
+      "quote": "Both models were trained on our [harmony response format] and should only be used with the harmony format as it will not work correctly otherwise."
+    }
+  ],
+  "3-2 (파인튜닝 Fine-tuning)": "The evidence details for fine-tuning mention that 'Both gpt-oss models can be fine-tuned for a variety of specialized use cases.' Further, it is noted that the smaller model, 'gpt-oss-20b,' is suitable for fine-tuning on consumer hardware, whereas the larger model, 'gpt-oss-120b' (with a link provided), can be fine-tuned on a single H100 node. This information underscores that the fine-tuning process is designed to be flexible, accommodating different hardware capabilities. It implies that there is an established, reproducible fine-tuning pipeline that adapts to both less and more resource-intensive environments, with detailed considerations for model size and specific tuning procedures.",
+  "3-2 (파인튜닝 Fine-tuning)__evidence": [
+    {
+      "source": "readme",
+      "quote": "Both gpt-oss models can be fine-tuned for a variety of specialized use cases. This smaller model `gpt-oss-20b` can be fine-tuned on consumer hardware, whereas the larger [`gpt-oss-120b`](https://huggingface.co/openai/gpt-oss-120b) can be fine-tuned on a single H100 node."
+    }
+  ],
+  "3-3 (강화학습 Reinforcement Learning)": "No evidence quotes were provided regarding the use of reinforcement learning techniques such as RLHF or DPO. As a result, there is no documented information on specific reinforcement learning algorithms, the methodologies implemented, or the configuration details related to reinforcement learning processes in this context.",
+  "3-3 (강화학습 Reinforcement Learning)__evidence": [],
+  "4-1 (사전학습 데이터 Pre-training Data)": "제공된 evidence에 해당하는 quote가 없어, 사전학습 데이터의 종류, 수량, 출처, 사용 범위 및 구성 방식에 관한 구체적인 세부사항은 확인할 수 없습니다. 이 항목은 사전학습에 사용된 데이터 전반에 대한 모든 정보를 포함해야 하나, 현재로서는 인용할 내용이 없습니다.",
+  "4-1 (사전학습 데이터 Pre-training Data)__evidence": [],
+  "4-2 (파인튜닝 데이터 Fine-tuning Data)": "현재 제공된 evidence quote가 없어 파인튜닝 데이터셋의 출처, 구성, 데이터 예시, 공개 여부 등과 관련된 세부 정보에 대해서는 구체적인 내용을 확인할 수 없습니다. 이 항목은 파인튜닝에 활용된 데이터에 관한 모든 면을 포괄하도록 설계되었으나, 인용 가능한 자료가 없습니다.",
+  "4-2 (파인튜닝 데이터 Fine-tuning Data)__evidence": [],
+  "4-3 (강화학습 데이터 Reinforcement Learning Data)": "강화학습 데이터셋의 구성, 접근 가능 여부, 출처, 생성 방식 등에 관한 상세한 정보 제공을 위한 evidence quote가 제출되지 않아, 이 항목에 있는 모든 관련 사항들을 인용할 만한 자료가 없습니다. 따라서 구체적인 근거나 quote 없이 해당 항목에 대한 내용을 설명하기 어렵습니다.",
+  "4-3 (강화학습 데이터 Reinforcement Learning Data)__evidence": [],
+  "4-4 (데이터 필터링 Data Filtering)": "데이터 필터링 또는 정제 방법, 적용된 기준, 필터링 과정 및 그 결과에 대한 상세 정보를 제공할 evidence quote가 없어, 해당 항목의 내용을 구체적으로 요약할 수 없습니다. 이 항목은 필터링 과정과 그 영향에 관련된 모든 정보를 담아야 하나, 인용 가능한 자료가 현재 제공되지 않았습니다.",
+  "4-4 (데이터 필터링 Data Filtering)__evidence": [],
+  "__usage": {
+    "fine_tuning": "used",
+    "rl": "not_used"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "2-3 (API)": "제공된 인용문에서는 모델 API에 관한 다양한 정보가 포함되어 있습니다. 첫 번째 인용문에서는 'gpt-oss-120b'와 'gpt-oss-20b' 모델을 Transformers 라이브러리를 통해 사용할 수 있으며, 기본적으로 채팅 템플릿을 사용 시 자동으로 harmony 응답 형식이 적용된다는 점을 나타냅니다. 사용자가 직접 model.generate를 호출할 경우에는 채팅 템플릿을 수동으로 적용하거나 'openai-harmony' 패키지를 사용해야 한다는 점이 강조됩니다. 두 번째 인용문에서는 브라우저 도구와 기타 Responses 호환 기능을 구현한 예시 Responses API 서버가 제공된다는 내용이 추가되어, API 서버 측 개발 및 통합 예시를 보여줍니다. 추가로, 세 번째 인용문은 chat completions API 호출의 코드 스니펫을 제공하여, 클라이언트를 이용한 모델 호출 시 모델, 메시지 리스트, 추론 노력, 온도, 최대 토큰 등의 파라미터를 지정하는 방식을 설명하고 있습니다. 이어지는 인용문에서는 '--base-url'이라는 인자를 통해 기본 API 엔드포인트 (예: 'http://localhost:8000/v1')를 설정하는 방법을 보여주며, FastAPI를 사용한 애플리케이션 설정과 uvicorn을 통한 API 서버 실행 과정 (예: create_api_server 함수 사용, 인자 port 적용)도 제시되어, API 구현과 실행 절차에 대한 구체적인 정보를 제공합니다.",
+  "2-3 (API)__evidence": [
+    {
+      "source": "readme",
+      "quote": "You can use `gpt-oss-120b` and `gpt-oss-20b` with the Transformers library. If you use Transformers' chat template, it will automatically apply the [harmony response format][harmony]. If you use `model.generate` directly, you need to apply the harmony format manually using the chat template or use our [`openai-harmony`][harmony] package."
+    },
+    {
+      "source": "readme",
+      "quote": "We also include an example Responses API server that implements the browser tool along with other Responses-compatible functionality"
+    },
+    {
+      "source": "py_files/gpt_oss/evals/chat_completions_sampler.py",
+      "quote": "response = self.client.chat.completions.create(\n                        model=self.model,\n                        messages=message_list,\n                        reasoning_effort=self.reasoning_effort,\n                        temperature=self.temperature,\n                        max_tokens=self.max_tokens,"
+    },
+    {
+      "source": "py_files/gpt_oss/evals/__main__.py",
+      "quote": "parser.add_argument(\n        \"--base-url\",\n        type=str,\n        default=\"http://localhost:8000/v1\","
+    },
+    {
+      "source": "py_files/gpt_oss/responses_api/api_server.py",
+      "quote": "app = FastAPI()"
+    },
+    {
+      "source": "py_files/gpt_oss/responses_api/serve.py",
+      "quote": "uvicorn.run(create_api_server(infer_next_token, encoding), port=args.port)"
+    }
+  ],
+  "3-1 (사전학습 Pre-training)": "제공된 인용문에는 사전학습(Pre-training)과 관련된 구체적인 내용이나 설명이 포함되어 있지 않습니다. 따라서 사전학습 과정에서 사용된 방법론, 절차, 데이터 흐름, 하이퍼파라미터 설정 등에 대해 언급된 정보는 없습니다.",
+  "3-1 (사전학습 Pre-training)__evidence": [],
+  "3-2 (파인튜닝 Fine-tuning)": "인용문에서는 파인튜닝에 대해 간단하게 언급하며, 모델을 특정 사용 사례에 맞춰 완전히 커스터마이즈할 수 있는 파인튜닝 기능을 제공한다는 점을 강조합니다. 이는 사용자 맞춤형 세밀한 파인튜닝 작업을 통해 모델 성능을 특정 목적에 맞게 향상시킬 수 있음을 시사합니다. 구체적인 데이터 사용 여부나 파이프라인의 재현 가능성에 대한 추가 정보는 언급되지 않았으나, 파인튜닝 가능성이 명시되어 있는 점이 중요한 특징으로 부각됩니다.",
+  "3-2 (파인튜닝 Fine-tuning)__evidence": [
+    {
+      "source": "readme",
+      "quote": "- **Fine-tunable:** Fully customize models to your specific use case through parameter fine-tuning."
+    }
+  ],
+  "3-3 (강화학습 Reinforcement Learning)": "제공된 인용문에서는 강화학습(RLHF, DPO 등)과 관련된 구체적인 내용이나 절차에 대한 정보가 전혀 포함되어 있지 않습니다. 따라서 강화학습 알고리즘의 사용 여부, 구체적 방식 및 절차, 설정된 값 등에 관한 정보는 제공되지 않았습니다.",
+  "3-3 (강화학습 Reinforcement Learning)__evidence": []
+}

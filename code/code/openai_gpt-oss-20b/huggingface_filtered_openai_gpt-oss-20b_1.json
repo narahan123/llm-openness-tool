@@ -1,0 +1,38 @@
+{
+  "1-1 (가중치 Weights)": "인용문에 따르면, 모델의 가중치는 Hugging Face Hub에서 다운로드할 수 있도록 제공되고 있습니다. 특히, Hugging Face CLI를 통해 직접 다운로드가 가능하다는 점을 강조하고 있어, 사용자가 쉽게 접근할 수 있는 공개된 가중치임을 보여줍니다.",
+  "1-1 (가중치 Weights)__evidence": [
+    {
+      "source": "readme",
+      "quote": "You can download the model weights from the [Hugging Face Hub](https://huggingface.co/collections/openai/gpt-oss-68911959590a1634ba11c7a4) directly from Hugging Face CLI:"
+    }
+  ],
+  "1-2 (코드 Code)": "제공된 코드 스니펫은 transformers 라이브러리의 pipeline을 활용하여 모델을 불러오고 텍스트 생성을 수행하는 과정을 상세히 보여줍니다. 이 코드 예제는 모델 ID를 사용하여 'openai/gpt-oss-20b' 모델을 불러오며, torch의 dtype과 device 설정을 자동으로 구성한 후, 메시지를 입력받아 최대 256 토큰의 새 텍스트를 생성하는 방식으로 모델의 기능을 시연합니다.",
+  "1-2 (코드 Code)__evidence": [
+    {
+      "source": "readme",
+      "quote": "from transformers import pipeline\nimport torch\n\nmodel_id = \"openai/gpt-oss-20b\"\n\npipe = pipeline(\n    \"text-generation\",\n    model=model_id,\n    torch_dtype=\"auto\",\n    device_map=\"auto\",\n)\n\nmessages = [\n    {\"role\": \"user\", \"content\": \"Explain quantum mechanics clearly and concisely.\"},\n]\n\noutputs = pipe(\n    messages,\n    max_new_tokens=256,\n)\nprint(outputs[0][\"generated_text\"][-1])"
+    }
+  ],
+  "1-3 (라이선스 License)": "인용문은 라이선스 정보에 대해 Apache License Version 2.0이 명시되어 있음을 보여줍니다. 이는 'license: apache-2.0'이라는 명시적인 태그와 함께 제공되어, 사용, 수정, 배포 및 상업적 이용에 관한 허용 권한을 가진 라이선스임을 확인시켜 줍니다.",
+  "1-3 (라이선스 License)__evidence": [
+    {
+      "source": "readme",
+      "quote": "license: apache-2.0"
+    },
+    {
+      "source": "license_file",
+      "quote": "Apache License\n                           Version 2.0, January 2004"
+    }
+  ],
+  "1-4 (논문 Paper)": "제공된 인용문에서는 모델의 관련 문서와 자료에 대해 두 가지 링크가 포함되어 있습니다. 하나는 모델 카드에 대한 링크이며, 다른 하나는 OpenAI 블로그로 연결되는 링크로, 이를 통해 모델의 공식 문서와 기술적 세부사항들을 추가적으로 확인할 수 있도록 하고 있습니다.",
+  "1-4 (논문 Paper)__evidence": [
+    {
+      "source": "readme",
+      "quote": "<a href=\"https://openai.com/index/gpt-oss-model-card\"><strong>Model card</strong></a> ·"
+    },
+    {
+      "source": "readme",
+      "quote": "<a href=\"https://openai.com/index/introducing-gpt-oss/\"><strong>OpenAI blog</strong></a>"
+    }
+  ]
+}

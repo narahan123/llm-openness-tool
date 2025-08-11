@@ -1,0 +1,1 @@
+tencent/hunyuan-1.8b-instruct

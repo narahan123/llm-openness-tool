@@ -1,0 +1,10 @@
+{
+  "pip_installs": [
+    "pip install transformers>=4.46.0",
+    "pip install torch"
+  ],
+  "filename": "run_tmp.py",
+  "code_language": "python",
+  "code": "from transformers import pipeline\nimport torch\n\nmodel_id = \"openai/gpt-oss-20b\"\n\npipe = pipeline(\n    \"text-generation\",\n    model=model_id,\n    torch_dtype=\"auto\",\n    device_map=\"auto\",\n)\n\nmessages = [\n    {\"role\": \"user\", \"content\": \"Explain quantum mechanics clearly and concisely.\"},\n]\n\noutputs = pipe(\n    messages,\n    max_new_tokens=256,\n)\nprint(outputs[0][\"generated_text\"][-1])",
+  "notes": "이 코드는 gpt-oss-20b 모델을 사용하여 양자역학에 대한 설명을 생성합니다."
+}
