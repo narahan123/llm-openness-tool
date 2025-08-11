@@ -1,0 +1,66 @@
+{
+  "1-5 (아키텍처 Architecture)": "이 항목의 인용문들은 모델 아키텍처의 구현 세부 사항을 설명합니다. 첫 번째 인용문에서는 gpt_oss/torch/model.py에 포함된 비효율적인 참고 PyTorch 구현체가 언급되며, 기본 PyTorch 연산자를 활용해 정확한 모델 아키텍처를 보여주면서 MoE(tensor parallelism)를 지원하여 예를 들어 4xH100 또는 2xH200과 같은 다수의 GPU에서 더 큰 모델을 실행할 수 있도록 설계되었음을 알 수 있습니다. 두 번째 인용문은 모델의 블록 수(num_hidden_layers)를 직접 config에서 가져오는 방식으로 레이어의 구성을 반영하며, 세 번째 인용문은 모델 블록마다 Cache 인스턴스를 생성하여 동시 세션, 문맥 및 모델 구성의 키/값 헤드의 수를 활용해 캐시 구성을 동적으로 관리함을 보여줍니다.",
+  "1-5 (아키텍처 Architecture)__evidence": [
+    {
+      "source": "readme",
+      "quote": "We include an inefficient reference PyTorch implementation in [gpt_oss/torch/model.py]. This code uses basic PyTorch operators to show the exact model architecture, with a small addition of supporting tensor parallelism in MoE so that the larger model can run with this code (e.g., on 4xH100 or 2xH200)."
+    },
+    {
+      "source": "py_files/gpt_oss/metal/scripts/create-local-model.py",
+      "quote": "num_blocks = config[\"num_hidden_layers\"]"
+    },
+    {
+      "source": "py_files/gpt_oss/responses_api/inference/triton.py",
+      "quote": "caches = [Cache(CONCURRENT_SESSIONS, CONTEXT, model.config.num_key_value_heads) for _ in range(len(model.block))]"
+    }
+  ],
+  "1-6 (토크나이저 Tokenizer)": "이 항목에서는 토크나이저의 선택과 세부 구현 사항에 관한 다양한 코드 예시가 포함되어 있습니다. 첫 번째 인용문은 디코딩 작업에서 tokenizer.decode 함수를 활용하는 방식으로 시스템 메시지를 처리하는 모습을 보여주며, 두 번째 인용문에서는 모델 내부에 내장된 토크나이저를 직접 참조하고 있습니다. 세 번째 인용문은 tiktoken.Encoding 객체를 생성하며 토크나이저의 이름을 'o200k_harmony'로 설정하고, 패턴 문자열, 병합 가능한 순위(mergeable_ranks) 및 특별한 토큰들에 대한 상세 매핑(예를 들어, <|startoftext|>, <|endoftext|> 등)을 지정한 내용을 담고 있습니다. 이로부터 해당 토크나이저가 기본 설정 외에도 사용자 정의된 특별 토큰과 예약어를 포함하는 복잡한 설정을 가진다는 점을 알 수 있습니다.",
+  "1-6 (토크나이저 Tokenizer)__evidence": [
+    {
+      "source": "py_files/gpt-oss-mcp-server/reference-system-prompt.py",
+      "quote": "system_message = tokenizer.decode(tokens)"
+    },
+    {
+      "source": "py_files/gpt_oss/metal/examples/chat.py",
+      "quote": "tokenizer = model.tokenizer"
+    },
+    {
+      "source": "py_files/gpt_oss/tokenizer.py",
+      "quote": "tokenizer = tiktoken.Encoding(\n        name=\"o200k_harmony\",\n        pat_str=o200k_base._pat_str,\n        mergeable_ranks=o200k_base._mergeable_ranks,\n        special_tokens={\n            **o200k_base._special_tokens,\n            \"<|startoftext|>\": 199998,\n            \"<|endoftext|>\": 199999,\n            \"<|reserved_200000|>\": 200000,\n            \"<|reserved_200001|>\": 200001,\n            \"<|return|>\": 200002,\n            \"<|constrain|>\": 200003,\n            \"<|reserved_200004|>\": 200004,\n            \"<|channel|>\": 200005,\n            \"<|start|>\": 200006,\n            \"<|end|>\": 200007,\n            \"<|message|>\": 200008,\n            \"<|reserved_200009|>\": 200009,\n            \"<|reserved_200010|>\": 200010,\n            \"<|reserved_200011|>\": 200011,\n            \"<|call|>\": 200012,\n        } | {\n            f\"<|reserved_{i}|>\": i for i in range(200013, 201088)\n        },\n    )"
+    }
+  ],
+  "2-1 (하드웨어 Hardware)": "하드웨어 관련 인용문들은 모델 훈련과 실행에 사용된 계산 자원에 대한 구체적인 정보를 제공합니다. 첫 번째 인용문에서는 gpt-oss-120b 모델이 80GB GPU(예: NVIDIA H100이나 AMD MI300X)를 활용하여 생산용 및 고난이도 추론 작업을 처리할 수 있도록 설계되었으며, 이 모델은 총 117B 매개 변수를 가지면서 5.1B 활성 매개 변수를 활용하는 방식임을 설명합니다. 이어지는 인용문들은 분산 초기화(init_distributed()) 및 torch.cuda.set_device(rank)를 호출하는 코드를 통해, GPU 자원을 올바르게 설정 및 할당하여 병렬 처리 및 분산 학습을 지원하는 하드웨어 환경을 구축하는 과정을 나타냅니다.",
+  "2-1 (하드웨어 Hardware)__evidence": [
+    {
+      "source": "readme",
+      "quote": "gpt-oss-120b — for production, general purpose, high reasoning use cases that fit into a single 80GB GPU (like NVIDIA H100 or AMD MI300X) (117B parameters with 5.1B active parameters)"
+    },
+    {
+      "source": "py_files/gpt_oss/chat.py",
+      "quote": "device = init_distributed()"
+    },
+    {
+      "source": "py_files/gpt_oss/responses_api/inference/triton.py",
+      "quote": "torch.cuda.set_device(rank)"
+    }
+  ],
+  "2-2 (소프트웨어 Software)": "소프트웨어 관련 인용문들은 모델 훈련 및 추론에 사용되는 프레임워크와 라이브러리, 그리고 설정 옵션에 대한 세부 정보를 제공합니다. 첫 번째 인용문에서는 'pip install gpt-oss' 명령어로 gpt-oss 라이브러리를 설치하는 과정을 보여주며, 두 번째 인용문은 명령행 인자 파서를 통해 --backend 옵션을 설정하는 부분을 보여주는데, 이는 'triton', 'torch', 'vllm'과 같은 여러 백엔드 중 하나를 선택할 수 있도록 설계된 것을 의미합니다. 또한, torch 및 transformers 라이브러리로부터 AutoModelForCausalLM, PreTrainedModel 등을 임포트하는 코드를 통해 모델 구현과 추론에 필수적인 소프트웨어 스택이 어떻게 구성되어 있는지 상세하게 나타냅니다.",
+  "2-2 (소프트웨어 Software)__evidence": [
+    {
+      "source": "readme",
+      "quote": "pip install gpt-oss"
+    },
+    {
+      "source": "py_files/gpt_oss/chat.py",
+      "quote": "parser.add_argument(\n        \"--backend\",\n        type=str,\n        default=\"triton\",\n        choices=[\"triton\", \"torch\", \"vllm\"],\n        help=\"Inference backend\",\n    )"
+    },
+    {
+      "source": "py_files/gpt_oss/metal/scripts/create-local-model.py",
+      "quote": "import torch"
+    },
+    {
+      "source": "py_files/gpt_oss/responses_api/inference/transformers.py",
+      "quote": "from transformers import AutoModelForCausalLM, PreTrainedModel"
+    }
+  ]
+}

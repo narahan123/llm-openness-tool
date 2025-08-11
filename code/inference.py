@@ -1,4 +1,4 @@
-# huggingface_disfeter.py
+# inference.py
 import os, sys, json, re, shlex, subprocess
 from pathlib import Path
 from typing import List, Dict, Any
@@ -15,7 +15,10 @@ if not _api_key:
 _client = OpenAI(api_key=_api_key)
 
 OPENAI_MODEL = os.getenv("OPENAI_MODEL_INFER_PICK", "gpt-4o-mini")
-ENC_RUN = "cp949" if os.name == "nt" else "utf-8"   # 콘솔 출력 인코딩
+ENC_RUN = "cp949" if os.name == "nt" else "utf-8"  # 콘솔 출력 인코딩
+
+# 모델 파이프라인에서 내려주는 기본 출력 폴더 (없으면 현재 폴더)
+_DEFAULT_OUTDIR = os.getenv("MODEL_OUTPUT_DIR") or os.getenv("CURRENT_MODEL_DIR") or "."
 
 # ─────────────────────────────────────────
 # GPT 프롬프트: 실행 예제 + pip 설치 명령을 JSON으로
@@ -26,12 +29,12 @@ _SYSTEM = """
 
 규칙:
 - 오직 JSON 객체만 출력한다.
-- 서버/REST API/vLLM 서버 띄우기/쿠버네티스 등은 제외하고, "로컬 파이썬 스크립트" 예제를 우선한다.
+- 서버/REST API/vLLM 서버 띄우기 등은 제외하고, "로컬 파이썬 스크립트" 예제를 우선한다.
 - 가능하면 transformers 기반의 간단한 chat/inference 예제를 택한다.
 - 코드 블록 표시는 쓰지 말고, code 필드에 순수 코드만 넣어라.
 - 설치 명령은 'pip install ...' 형태로만 넣어라 (여러 줄 가능).
 - README에 설치 명령이 없더라도, 코드에 필요한 최소 라이브러리(예: transformers)가 보이면 포함해라.
-- torch 설치는 환경 의존성이 크므로 반드시 필요하다고 판단될 때만 넣어라.
+- torch 설치는 환경 의존성이 크므로 코드에서 실제로 필요할 때만 넣어라.
 
 출력 JSON 스키마:
 {
@@ -51,8 +54,7 @@ def _ask_plan_from_readme(readme: str) -> Dict[str, Any]:
             {"role": "system", "content": _SYSTEM},
             {"role": "user", "content": readme},
         ],
-        temperature=0
-        # 일부 모델(o3계열)은 temperature 미지원 → 필요시 제거 가능
+        temperature=0  # 일부 모델이 미지원이면 제거해도 됨
     )
     try:
         return json.loads(resp.choices[0].message.content)
@@ -70,7 +72,6 @@ def _normalize_pip_cmd(cmd: str) -> List[str] | None:
     if not isinstance(cmd, str):
         return None
     cmd = cmd.strip().lstrip("!").replace("pip3", "pip")
-    # 'python -m pip install ...' 도 케이스 고려
     m = re.search(r"(?:python\s*-m\s+)?pip\s+install\s+(.+)", cmd, flags=re.I)
     if not m:
         return None
@@ -80,12 +81,14 @@ def _normalize_pip_cmd(cmd: str) -> List[str] | None:
 def _ensure_minimal_installs(plan: Dict[str, Any]) -> List[str]:
     """
     README에 설치 명령이 비어있거나 부족할 때 최소 보정.
-    code 내용에서 import 흔적을 보고 transformers만이라도 추가.
+    code 내용에서 import 흔적을 보고 transformers/torch 추가.
     """
     installs = [c for c in (plan.get("pip_installs") or []) if isinstance(c, str)]
     code = plan.get("code") or ""
     if "transformers" in code and not any("transformers" in c for c in installs):
         installs.append("pip install transformers>=4.46.0")
+    if re.search(r"\bimport\s+torch\b|\btorch\.", code) and not any(c.strip().startswith("pip install torch") for c in installs):
+        installs.append("pip install torch")
     return installs
 
 def _run_cmd(cmd_list: List[str], cwd: Path | None = None, timeout: int | None = None) -> Dict[str, Any]:
@@ -120,10 +123,28 @@ def _run_cmd(cmd_list: List[str], cwd: Path | None = None, timeout: int | None =
         }
 
 # ─────────────────────────────────────────
+# 안전한 출력 폴더 결정
+# ─────────────────────────────────────────
+def _safe_outdir(output_dir: str | Path | None) -> Path:
+    """
+    - 명시된 output_dir이 없으면 환경변수 기본(_DEFAULT_OUTDIR)
+    - 실수로 긴 문장/프롬프트가 넘어오면 무시하고 기본 폴더 사용
+    """
+    if output_dir is None:
+        return Path(_DEFAULT_OUTDIR)
+
+    p = Path(output_dir)
+    name = p.name
+    # 공백 과다/특수문자 많으면 프롬프트로 오인 → 기본 폴더 사용
+    if len(name) > 48 or re.search(r"[\\/:*?\"<>|]", name) or len(re.findall(r"\s", name)) > 6:
+        return Path(_DEFAULT_OUTDIR)
+    return p
+
+# ─────────────────────────────────────────
 # 메인: 계획 추출 → 설치 → 코드 실행 → 결과 JSON 저장
 # ─────────────────────────────────────────
-def run_inference(readme: str, output_dir: str | Path = ".") -> Path:
-    outdir = Path(output_dir)
+def run_inference(readme: str, output_dir: str | Path | None = None) -> Path:
+    outdir = _safe_outdir(output_dir)
     outdir.mkdir(parents=True, exist_ok=True)
 
     # 1) GPT에게 실행 계획 요청
@@ -142,14 +163,14 @@ def run_inference(readme: str, output_dir: str | Path = ".") -> Path:
     # 2) 설치 명령 보정/추가
     plan["pip_installs"] = _ensure_minimal_installs(plan)
 
-    # 3) 계획 JSON 저장 (원본)
+    # 3) 계획 JSON 저장 (모델 폴더)
     plan_path = outdir / "inference_plan.json"
     with open(plan_path, "w", encoding="utf-8") as f:
         json.dump(plan, f, ensure_ascii=False, indent=2)
 
     install_logs: List[Dict[str, Any]] = []
 
-    # 4) 의존성 설치 실행
+    # 4) 의존성 설치 실행 (작업 디렉토리 = 모델 폴더)
     for raw in plan["pip_installs"]:
         norm = _normalize_pip_cmd(raw)
         if not norm:
@@ -158,10 +179,10 @@ def run_inference(readme: str, output_dir: str | Path = ".") -> Path:
             })
             continue
         print(f"📦 Installing: {' '.join(norm)}")
-        log = _run_cmd(norm, cwd=outdir, timeout=1200)  # 설치 넉넉히 20분까지
+        log = _run_cmd(norm, cwd=outdir, timeout=1200)  # 최대 20분
         install_logs.append(log)
 
-    # 5) 코드 파일 생성
+    # 5) 코드 파일 생성 (모델 폴더)
     codefile = outdir / filename
     created_code = False
     if code:
@@ -172,17 +193,12 @@ def run_inference(readme: str, output_dir: str | Path = ".") -> Path:
     else:
         print("⚠️ 실행 코드가 비어 있습니다. (README에 로컬 실행 예제가 없을 수 있음)")
 
-    # 6) 코드 실행
-    exec_log = {
-        "cmd": "",
-        "returncode": None,
-        "stdout": "",
-        "stderr": ""
-    }
+    # 6) 코드 실행 (작업 디렉토리 = 모델 폴더)
+    exec_log = {"cmd": "", "returncode": None, "stdout": "", "stderr": ""}
     if created_code:
         print(f"\n✅ 4. '{codefile.name}' 스크립트 실행을 시작합니다...")
         print("   (모델 다운로드 및 실행에 시간이 걸릴 수 있습니다.)\n")
-        exec_cmd = [sys.executable, str(codefile)]
+        exec_cmd = [sys.executable, filename]
         exec_log = _run_cmd(exec_cmd, cwd=outdir, timeout=1800)  # 최대 30분
         # 실행 후 임시 파일 제거
         try:
@@ -191,7 +207,7 @@ def run_inference(readme: str, output_dir: str | Path = ".") -> Path:
         except Exception:
             pass
 
-    # 7) 결과 JSON 저장
+    # 7) 결과 JSON 저장 (모델 폴더)
     result = {
         "plan_path": str(plan_path),
         "plan": plan,
@@ -202,9 +218,9 @@ def run_inference(readme: str, output_dir: str | Path = ".") -> Path:
     with open(result_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    # 콘솔에도 핵심 결과 요약
+    # 콘솔 요약
     print("\n" + "-"*60)
-    print(f"📄 계획 JSON: {result_path.parent / 'inference_plan.json'}")
+    print(f"📄 계획 JSON: {plan_path}")
     print(f"📄 결과 JSON: {result_path}")
     print(f"▶ 실행 반환코드: {exec_log.get('returncode')}")
     print("-"*60)

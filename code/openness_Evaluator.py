@@ -174,15 +174,76 @@ def _gpt_evaluate(model: str,
     return out
 
 # ─────────── 메인 평가 함수 ───────────
+def _read_usage_from_dispatch(hf: dict, gh: dict, ax: dict) -> dict:
+    # 우선순위: arXiv > HF > GH  (원하면 합의 규칙으로 바꿔도 됨)
+    for src in (ax, hf, gh):
+        u = (src or {}).get("__usage")
+        if isinstance(u, dict):
+            ft = u.get("fine_tuning", "unknown")
+            rl = u.get("rl", "unknown")
+            if ft in {"used","not_used"} or rl in {"used","not_used"}:
+                return {"fine_tuning": ft, "rl": rl}
+    # 전부 없거나 unknown이면 unknown
+    return {"fine_tuning":"unknown", "rl":"unknown"}
+
+def _aggregate_usage(hf: dict, gh: dict, ax: dict) -> dict:
+    def norm(x): return x if x in {"used","not_used"} else "unknown"
+    votes = []
+    for src in (ax, hf, gh):
+        u = (src or {}).get("__usage") or {}
+        votes.append({
+            "ft": norm(u.get("fine_tuning")),
+            "rl": norm(u.get("rl")),
+        })
+
+    def decide(key):
+        vals = [v[key] for v in votes if v[key] != "unknown"]
+        if not vals:
+            return "unknown"
+        if "used" in vals:
+            return "used"
+        return "not_used"
+
+    return {"fine_tuning": decide("ft"), "rl": decide("rl")}
+
 def evaluate_openness(model_name: str,
                       hf_json=None, gh_json=None, arxiv_json=None, pretrain_parts=None) -> Dict:
     hf, gh, ax = hf_json or {}, gh_json or {}, arxiv_json or {}
     pretrain = pretrain_parts or []
-    scores = _gpt_evaluate(model_name, hf, gh, ax, pretrain)
-    scores.update(_auto_scores(hf))           # 자동 1점 항목 추가/덮어쓰기
 
-    total = sum(v["score"] for v in scores.values())
-    return {"model": model_name, "scores": scores, "total_score": total}
+    scores = _gpt_evaluate(model_name, hf, gh, ax, pretrain)
+    scores.update(_auto_scores(hf))  # 1-1/1-5/1-6
+
+    # ★ Dispatcher가 넣은 usage로만 판단
+    usage = _aggregate_usage(hf_json, gh_json, arxiv_json)
+
+    exclude = []
+    if usage["fine_tuning"] == "not_used":
+        exclude += ["3-2", "4-2"]
+    if usage["rl"] == "not_used":
+        exclude += ["3-3", "4-3"]
+
+    included = {k:v for k,v in scores.items()
+                if not any(k.startswith(p) for p in exclude)}
+
+    raw_sum = sum(v.get("score",0) for v in included.values())
+    denom  = max(len(included), 1)
+    final_10 = round(raw_sum * (10.0 / denom), 3)
+
+    return {
+        "model": model_name,
+        "scores": scores,
+        "included_scores": included,
+        "final_score_10pt": final_10,
+        "meta": {
+            "usage_from_dispatch": usage,
+            "excluded": [k for k in scores if k not in included],
+            "denominator": denom,
+            "raw_sum": raw_sum,
+            "scale": f"10/{denom}"
+        }
+    }
+
 
 # ─────────── 파일 로더 & CLI ───────────
 def _load(p):

@@ -1,0 +1,8 @@
+{
+  "pretrain_method": "모델은 Harmony response format을 사용하여 훈련되었습니다.",
+  "pretrain_data": "구체적인 사전학습 데이터에 대한 언급은 없습니다.",
+  "__evidence": [
+    "Both models were trained on our harmony response format and should only be used with the harmony format as it will not work correctly otherwise.",
+    "본 문서 전체에서 모델의 사전학습 데이터에 대한 구체적인 설명은 제공되지 않습니다."
+  ]
+}

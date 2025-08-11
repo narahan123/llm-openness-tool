@@ -113,6 +113,35 @@ _BASE_SUMMARY_SYS = """
 반드시 JSON 객체만 출력하십시오.
 """.strip()
 
+_USAGE_SYS = """
+너는 분류기다. 입력 텍스트(quote 모음)만 보고 이 모델이
+- Fine-tuning을 실제로 사용했는지
+- Reinforcement Learning(RL, RLHF/ PPO/ DPO/ RLAIF 등)을 실제로 사용했는지
+판단하라.
+
+JSON으로만 답하라:
+{ "fine_tuning": "used|not_used|unknown", "rl": "used|not_used|unknown" }
+"""
+
+def _classify_usage_from_merged(merged: Dict[str, Any]) -> Dict[str, str]: # 강화학습이나 파인튜닝을 했는지
+    # evidence에서 quote만 모아서 판단
+    def _quotes(label: str):
+        arr = merged.get(f"{label}__evidence", []) or []
+        return [e.get("quote", "") for e in arr if isinstance(e, dict)]
+    ft = "\n".join(_quotes("3-2 (파인튜닝 Fine-tuning)"))
+    rl = "\n".join(_quotes("3-3 (강화학습 Reinforcement Learning)"))
+    text = (f"[fine_tuning]\n{ft}\n\n[reinforcement]\n{rl}").strip()
+    if not text:
+        return {"fine_tuning": "unknown", "rl": "unknown"}
+    ans = _chat_json(_USAGE_SYS, text[:12000])  # JSON only
+    ft_s = ans.get("fine_tuning", "unknown")
+    rl_s = ans.get("rl", "unknown")
+    # 방어코드: 이상한 값이면 unknown
+    if ft_s not in {"used","not_used","unknown"}: ft_s = "unknown"
+    if rl_s not in {"used","not_used","unknown"}: rl_s = "unknown"
+    return {"fine_tuning": ft_s, "rl": rl_s}
+
+
 def _recall_inst(g: List[str]) -> str:
     return (
         f"이번 그룹 항목 정의:\n{_js(_desc(g))}\n"
@@ -253,9 +282,16 @@ def filter_github_features(model: str, save: bool = True, output_dir: str | Path
         parts.append(part)
 
     merged = _merge_all(parts)
+
+    try:
+        merged["__usage"] = _classify_usage_from_merged(merged)
+    except Exception as e:
+        print("⚠️ usage 분류 실패:", e)
+        merged["__usage"] = {"fine_tuning":"unknown","rl":"unknown"}
+
     if save:
-        mpath = output_dir / f"github_filtered_final_{base}.json"   # ★
-        json.dump(merged, open(mpath,"w",encoding="utf-8"), ensure_ascii=False, indent=2)
+        mpath = output_dir / f"github_filtered_final_{base}.json"
+        json.dump(merged, open(mpath, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
         print("✅ 최종 병합 결과 저장:", mpath)
     return merged
 # ───────────── CLI ─────────────

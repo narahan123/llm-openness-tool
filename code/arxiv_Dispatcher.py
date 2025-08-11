@@ -109,6 +109,30 @@ _BASE_SUMMARY_SYS = """
 반드시 JSON 객체만 출력하십시오.
 """.strip()
 
+_USAGE_SYS = """
+너는 분류기다. 입력 텍스트(quote/요약)만 보고 이 모델이
+Fine-tuning / Reinforcement Learning을 실제로 사용했는지 판단하라.
+JSON만:
+{ "fine_tuning": "used|not_used|unknown", "rl": "used|not_used|unknown" }
+"""
+
+def _classify_usage_from_merged(merged: dict) -> dict: #강화학습이나 파인튜닝을 했는지
+    def _pull(label):
+        txt = merged.get(label, "") or ""
+        evs = merged.get(f"{label}__evidence", []) or []
+        quotes = "\n".join([e.get("quote","") for e in evs if isinstance(e, dict)])
+        return (txt + "\n" + quotes).strip()
+    ft_txt = _pull("3-2 (파인튜닝 Fine-tuning)")
+    rl_txt = _pull("3-3 (강화학습 Reinforcement Learning)")
+    text = f"[fine_tuning]\n{ft_txt}\n\n[reinforcement]\n{rl_txt}".strip()
+    if not text:
+        return {"fine_tuning":"unknown","rl":"unknown"}
+    ans = _chat_json(_USAGE_SYS, text[:12000])
+    ft_s = ans.get("fine_tuning","unknown"); rl_s = ans.get("rl","unknown")
+    if ft_s not in {"used","not_used","unknown"}: ft_s = "unknown"
+    if rl_s not in {"used","not_used","unknown"}: rl_s = "unknown"
+    return {"fine_tuning": ft_s, "rl": rl_s}
+
 def _desc(ids): return {LABELS[i]: EVAL_DESCRIPTIONS[LABELS[i]] for i in ids}          # 설명 생략(토큰 절약)
 def _recall_inst(g): return "이번 그룹 항목:\n"+_js(_desc(g))
 def _summ_inst(g):   return "이번 그룹 항목:\n"+_js(_desc(g))
@@ -284,6 +308,13 @@ def filter_arxiv_features(model, save: bool = True, output_dir: str | Path = "."
 
     # 4) 최종 병합 저장
     merged = _merge_all(parts)
+
+    try:
+        merged["__usage"] = _classify_usage_from_merged(merged)
+    except Exception as e:
+        print("⚠️ usage 분류 실패:", e)
+        merged["__usage"] = {"fine_tuning":"unknown","rl":"unknown"}
+        
     if save:
         fp = output_dir / f"arxiv_filtered_final_{base}.json"
         json.dump(merged, open(fp, "w", encoding="utf-8"), ensure_ascii=False, indent=2)

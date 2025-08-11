@@ -130,6 +130,31 @@ _BASE_SUMMARY_SYS = """
 반드시 JSON 객체만 반환하세요(텍스트 추가 금지).
 """.strip()
 
+_USAGE_SYS = """
+너는 분류기다. 입력 텍스트(quote/요약)만 보고 이 모델이
+Fine-tuning / Reinforcement Learning을 실제로 사용했는지 판단하라.
+JSON만:
+{ "fine_tuning": "used|not_used|unknown", "rl": "used|not_used|unknown" }
+"""
+
+def _classify_usage_from_merged(merged: dict) -> dict: #강화학습,파인튜닝을 했는지 
+    def _pull(label):
+        txt = merged.get(label, "") or ""
+        evs = merged.get(f"{label}__evidence", []) or []
+        quotes = "\n".join([e.get("quote","") for e in evs if isinstance(e, dict)])
+        return (txt + "\n" + quotes).strip()
+    ft_txt = _pull("3-2 (파인튜닝 Fine-tuning)")
+    rl_txt = _pull("3-3 (강화학습 Reinforcement Learning)")
+    text = f"[fine_tuning]\n{ft_txt}\n\n[reinforcement]\n{rl_txt}".strip()
+    if not text:
+        return {"fine_tuning":"unknown","rl":"unknown"}
+    ans = _chat_json(_USAGE_SYS, text[:12000])
+    ft_s = ans.get("fine_tuning","unknown"); rl_s = ans.get("rl","unknown")
+    if ft_s not in {"used","not_used","unknown"}: ft_s = "unknown"
+    if rl_s not in {"used","not_used","unknown"}: rl_s = "unknown"
+    return {"fine_tuning": ft_s, "rl": rl_s}
+
+
 def _build_recall_inst(group: List[str]) -> str:
     desc = _json(_group_desc_map(group))
     example = _json({
@@ -282,6 +307,13 @@ def filter_hf_features(model: str, save: bool = True, output_dir: str | Path = "
         parts.append(part)
 
     merged = _merge_dicts(parts)
+
+    try:
+        merged["__usage"] = _classify_usage_from_merged(merged)
+    except Exception as e:
+        print("⚠️ usage 분류 실패:", e)
+        merged["__usage"] = {"fine_tuning":"unknown","rl":"unknown"}
+
     if save:
         out_merged = output_dir / f"huggingface_filtered_final_{base}.json"
         json.dump(merged, open(out_merged, "w", encoding="utf-8"), ensure_ascii=False, indent=2)

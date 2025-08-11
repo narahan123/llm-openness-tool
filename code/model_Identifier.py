@@ -1,3 +1,4 @@
+# pip install requests python-dotenv openai huggingface_hub PyMuPDF
 import json
 import re
 import requests
@@ -323,8 +324,14 @@ Hugging Face에 등록된 모델 '{gh_id}'의 원본 코드가 저장된 Hugging
     return None
 
 def run_all_fetchers(user_input: str):
+    # inference 호출에 필요한 import를 함수 내부에 둬서 의존성 꼬임 방지
+    import os, json, requests
+    from pathlib import Path
+    from inference import run_inference
+
     outdir = make_model_dir(user_input)
     print(f"📁 출력 경로: {outdir}")
+
     info = extract_model_info(user_input)
     hf_id = gh_id = None
     found_rank_hf = found_rank_gh = None
@@ -345,7 +352,7 @@ def run_all_fetchers(user_input: str):
     if hf_ok and not gh_id:
         gh_link = find_github_in_huggingface(hf_cand)
         print(f"🔍 2순위 HF→GH link: {gh_link}")
-        if gh_link and test_github_repo_exists(gh_link):  # 원문 케이스 그대로 사용
+        if gh_link and test_github_repo_exists(gh_link):
             gh_id = gh_link
             found_rank_gh = 2
 
@@ -372,6 +379,8 @@ def run_all_fetchers(user_input: str):
             found_rank_hf = 3
             print("⚠️ GPT 추정 결과입니다. 모델 ID가 정확한지 검토 필요")
 
+    # ───────────────── HF / arXiv 처리 ─────────────────
+    data = {}
     if hf_id:
         rank_hf = found_rank_hf or '없음'
         print(f"✅ HF model: {hf_id} (발견: {rank_hf}순위)")
@@ -389,6 +398,8 @@ def run_all_fetchers(user_input: str):
             print("⚠️ arXiv JSON 파일이 존재하지 않아 필터링 생략")
     else:
         print("⚠️ HuggingFace 정보 없음")
+
+    # ───────────────── GitHub 처리 ─────────────────
     if gh_id:
         rank_gh = found_rank_gh or '없음'
         print(f"✅ GH repo: {gh_id} (발견: {rank_gh}순위)")
@@ -445,16 +456,15 @@ def run_all_fetchers(user_input: str):
         except Exception as e:
             print("⚠️ arXiv fetch/dispatch 실패:", e)
     else:
-        base_model_id = None  # GPT가 null 반환 → 프리트레인 없음
+        base_model_id = None  # GPT가 null → 프리트레인 없음
 
-
-    # 8. Openness 평가 수행
+    # ───────────────── Openness 평가 ─────────────────
     try:
         print("📝 개방성 평가 시작...")
         eval_res = evaluate_openness_from_files(
             full,
             base_dir=str(outdir),
-            base_model_id=base_model_id        # ← 인자 추가
+            base_model_id=base_model_id
         )
         base = full.replace("/", "_")
         outfile = Path(outdir) / f"openness_score_{base}.json"
@@ -462,9 +472,38 @@ def run_all_fetchers(user_input: str):
     except Exception as e:
         print("⚠️ 개방성 평가 중 오류 발생:", e)
 
-    # README 기반 추론은 data가 있을 때만
-    if 'data' in locals() and isinstance(data, dict) and data.get("readme"):
-        run_inference(data.get("readme"))
+    # ───────────────── README 기반 inference (폴더 내 저장) ─────────────────
+    # 1) 우선 메모리의 fetcher 결과에서 시도
+    readme_text = ""
+    try:
+        if isinstance(data, dict):
+            # huggingface_fetcher 반환 스키마에 따라 안전하게 추출
+            readme_text = (
+                data.get("readme") or
+                ((data.get("cardData") or {}).get("content") if isinstance(data.get("cardData"), dict) else "")
+            ) or ""
+        # 2) 비어있으면 파일에서 폴백
+        if not readme_text.strip() and hf_id:
+            base_for_file = hf_id.replace("/", "_").lower()
+            hf_json_path = Path(outdir) / f"huggingface_{base_for_file}.json"
+            if hf_json_path.exists():
+                with open(hf_json_path, "r", encoding="utf-8") as f:
+                    hf_json = json.load(f)
+                cd = hf_json.get("cardData") or {}
+                readme_text = (cd.get("content") or "")
+    except Exception as e:
+        print(f"⚠️ README 추출 실패: {e}")
+
+    if readme_text and readme_text.strip():
+        try:
+            # 결과 JSON이 모델 폴더 안에 생기도록 output_dir 지정
+            os.environ["MODEL_OUTPUT_DIR"] = str(outdir)  # 선택적 안전장치
+            run_inference(readme_text, output_dir=outdir)
+        except Exception as e:
+            print("⚠️ inference 실행 실패:", e)
+    else:
+        print("⚠️ README가 비어 있어 inference 단계 건너뜀")
+
 
 def make_model_dir(user_input: str) -> Path:
     info = extract_model_info(user_input)
@@ -473,6 +512,7 @@ def make_model_dir(user_input: str) -> Path:
     path = Path(safe)
     path.mkdir(parents=True, exist_ok=True)
     return path
+
 ###################################################################
 # if __name__ == "__main__":
 #     user_input = input("🌐 HF/GH URL 또는 org/model: ").strip()

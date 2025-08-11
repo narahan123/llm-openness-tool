@@ -1,0 +1,29 @@
+{
+  "2-3 (API)": "The evidence quotes indicate that the model can be accessed through API implementations designed to provide an OpenAI-compatible webserver. One quote states, 'Alternatively, you can run the model via [Transformers Serve] to spin up a OpenAI-compatible webserver,' while another adds, 'vLLM recommends using [uv] for Python dependency management. You can use vLLM to spin up an OpenAI-compatible webserver.' These details confirm that the model's API functionality is built around established platforms with provided documentation links and usage examples, ensuring that end users have multiple methods to deploy and interact with the model via standardized APIs.",
+  "2-3 (API)__evidence": [
+    {
+      "source": "readme",
+      "quote": "Alternatively, you can run the model via [`Transformers Serve`](https://huggingface.co/docs/transformers/main/serving) to spin up a OpenAI-compatible webserver:"
+    },
+    {
+      "source": "readme",
+      "quote": "vLLM recommends using [uv](https://docs.astral.sh/uv/) for Python dependency management. You can use vLLM to spin up an OpenAI-compatible webserver."
+    }
+  ],
+  "3-1 (사전학습 Pre-training)": "The single evidence quote provided explains that 'Both models were trained on our [harmony response format] and should only be used with the harmony format as it will not work correctly otherwise.' This summary highlights that the pre-training stage was executed using a specific method that relies on the 'harmony response format.' The approach implies a tightly controlled data flow and procedural setup during training, where adherence to a particular format is critical for the model to function properly, reflecting specific decisions in methodology and parameter configurations.",
+  "3-1 (사전학습 Pre-training)__evidence": [
+    {
+      "source": "readme",
+      "quote": "Both models were trained on our [harmony response format] and should only be used with the harmony format as it will not work correctly otherwise."
+    }
+  ],
+  "3-2 (파인튜닝 Fine-tuning)": "The evidence details for fine-tuning mention that 'Both gpt-oss models can be fine-tuned for a variety of specialized use cases.' Further, it is noted that the smaller model, 'gpt-oss-20b,' is suitable for fine-tuning on consumer hardware, whereas the larger model, 'gpt-oss-120b' (with a link provided), can be fine-tuned on a single H100 node. This information underscores that the fine-tuning process is designed to be flexible, accommodating different hardware capabilities. It implies that there is an established, reproducible fine-tuning pipeline that adapts to both less and more resource-intensive environments, with detailed considerations for model size and specific tuning procedures.",
+  "3-2 (파인튜닝 Fine-tuning)__evidence": [
+    {
+      "source": "readme",
+      "quote": "Both gpt-oss models can be fine-tuned for a variety of specialized use cases. This smaller model `gpt-oss-20b` can be fine-tuned on consumer hardware, whereas the larger [`gpt-oss-120b`](https://huggingface.co/openai/gpt-oss-120b) can be fine-tuned on a single H100 node."
+    }
+  ],
+  "3-3 (강화학습 Reinforcement Learning)": "No evidence quotes were provided regarding the use of reinforcement learning techniques such as RLHF or DPO. As a result, there is no documented information on specific reinforcement learning algorithms, the methodologies implemented, or the configuration details related to reinforcement learning processes in this context.",
+  "3-3 (강화학습 Reinforcement Learning)__evidence": []
+}
